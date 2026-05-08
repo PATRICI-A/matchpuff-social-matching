@@ -1,6 +1,7 @@
 package com.matchpuff.matchingservice.matching_service.application.dto.response;
 
 import com.matchpuff.matchingservice.matching_service.domain.model.enums.CareerEnum;
+import com.matchpuff.matchingservice.matching_service.domain.model.enums.GenderEnum;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,7 +15,9 @@ public class UserMatchProfileResponse {
     private UUID id;
     private CareerEnum career;
     private Integer semester;
-    private List<String> tag;
-    private List<String> schedule;
+    private List<TagResponse> tags;
+    private List<ScheduleResponse> schedules;
+    private GenderEnum gender;
+    private List<GenderEnum> genderPreferences;
     private Date lastSync;
 }

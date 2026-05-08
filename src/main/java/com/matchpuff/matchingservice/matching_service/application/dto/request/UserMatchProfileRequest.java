@@ -1,6 +1,8 @@
 package com.matchpuff.matchingservice.matching_service.application.dto.request;
 
 import com.matchpuff.matchingservice.matching_service.domain.model.enums.CareerEnum;
+import com.matchpuff.matchingservice.matching_service.domain.model.enums.GenderEnum;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -19,10 +21,17 @@ public class UserMatchProfileRequest {
     private Integer semester;
 
     @NotEmpty(message = "Los tags no pueden estar vacíos")
-    private List<String> tag;
+    @Valid
+    private List<TagRequest> tags;
 
     @NotEmpty(message = "Los horarios no pueden estar vacíos")
-    private List<String> schedule;
+    @Valid
+    private List<ScheduleRequest> schedules;
+
+    @NotNull(message = "El género es requerido")
+    private GenderEnum gender;
+
+    private List<GenderEnum> genderPreferences;
 
     @NotNull(message = "La fecha de última sincronización es requerida")
     @Past(message = "La fecha de última sincronización debe ser en el pasado")
