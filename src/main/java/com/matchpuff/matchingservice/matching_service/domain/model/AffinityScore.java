@@ -6,5 +6,6 @@ import lombok.Data;
 public class AffinityScore {
     private double score;
     private double interestScore;
+    private double academicScore;
     private double scheduleScore;
 }

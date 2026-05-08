@@ -12,42 +12,51 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Calcula la afinidad entre dos perfiles usando tres niveles de interés + horario.
- *
- * interestScore = 30% categoría + 50% nombre-tag + 20% género
- * totalScore    = 60% interestScore + 40% scheduleScore
- */
+// totalScore = 40% interestScore + 30% academicScore + 30% scheduleScore
+// interestScore = 30% categoria + 50% nombre-tag + 20% genero
+// academicScore = 60% carrera + 40% semestre
 @Service
 public class AffinityCalculatorServiceImpl implements AffinityCalculatorService {
 
-    // Pesos del interest score (deben sumar 1.0)
+    // Pesos del score total (suman 1.0)
+    private static final double W_INTEREST = 0.40;
+    private static final double W_ACADEMIC = 0.30;
+    private static final double W_SCHEDULE = 0.30;
+
+    // Pesos internos del interest score (suman 1.0)
     private static final double W_CATEGORY = 0.30;
     private static final double W_TAG_NAME = 0.50;
-    private static final double W_GENDER   = 0.10;
+    private static final double W_GENDER   = 0.20;
 
-    // Pesos del score total (deben sumar 1.0)
-    private static final double W_INTEREST  = 0.60;
-    private static final double W_SCHEDULE  = 0.40;
+    // Pesos internos del academic score (suman 1.0)
+    private static final double W_CAREER   = 0.60;
+    private static final double W_SEMESTER = 0.40;
 
-    // Granularidad del horario en minutos (ventana de 30 min)
+    // Diferencia maxima posible entre semestres (semestre 1 al 10)
+    private static final double MAX_SEMESTER_DIFF = 9.0;
+
+    // Granularidad del horario en minutos
     private static final int SLOT_MINUTES = 30;
 
     @Override
     public AffinityScore calculate(UserMatchProfile requester, UserMatchProfile target) {
         double interestScore = calculateInterestScore(requester, target);
+        double academicScore = calculateAcademicScore(requester, target);
         double scheduleScore = calculateScheduleScore(requester.getSchedules(), target.getSchedules());
-        double totalScore    = W_INTEREST * interestScore + W_SCHEDULE * scheduleScore;
+        double totalScore    = W_INTEREST * interestScore
+                             + W_ACADEMIC * academicScore
+                             + W_SCHEDULE * scheduleScore;
 
         AffinityScore result = new AffinityScore();
         result.setInterestScore(round(interestScore));
+        result.setAcademicScore(round(academicScore));
         result.setScheduleScore(round(scheduleScore));
         result.setScore(round(totalScore));
         return result;
     }
 
     // -------------------------------------------------------------------------
-    // Interest score: combina los tres niveles
+    // Interest score (40% del total)
     // -------------------------------------------------------------------------
 
     private double calculateInterestScore(UserMatchProfile a, UserMatchProfile b) {
@@ -60,10 +69,8 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
              + W_GENDER    * genderScore;
     }
 
-    /**
-     * Nivel 1: similitud de Jaccard sobre las categorías de los tags.
-     * Ejemplo: A tiene {Deportes, Música}, B tiene {Deportes, Arte} → 1/3 ≈ 0.33
-     */
+    // Nivel 1: Jaccard sobre las categorias de los tags
+    // Ej: A={Deportes, Musica}, B={Deportes, Arte} -> 1 comun / 3 union = 0.33
     private double level1CategoryScore(List<Tag> tagsA, List<Tag> tagsB) {
         if (isEmpty(tagsA) && isEmpty(tagsB)) return 1.0;
         if (isEmpty(tagsA) || isEmpty(tagsB)) return 0.0;
@@ -80,13 +87,8 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
         return (double) intersection.size() / union.size();
     }
 
-    /**
-     * Nivel 2: el nombre de un tag de A coincide con la categoría de B (y viceversa).
-     * Ejemplo: A tiene tag name="Voleibol" y B tiene categoría="Voleibol" → hit.
-     * Esto detecta cuando el hobby específico de uno es el área general del otro.
-     *
-     * Score = hits_bidireccionales / total_tags_posibles
-     */
+    // Nivel 2: el nombre de un tag de A coincide con la categoria de B (y viceversa)
+    // Ej: A tiene name="Voleibol" y B tiene category="Voleibol" -> hit
     private double level2TagNameScore(List<Tag> tagsA, List<Tag> tagsB) {
         if (isEmpty(tagsA) || isEmpty(tagsB)) return 0.0;
 
@@ -102,13 +104,9 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
         return (double) (hitsAtoB + hitsBtoA) / total;
     }
 
-    /**
-     * Nivel 3: compatibilidad mutua de preferencia de género.
-     * A acepta el género de B Y B acepta el género de A → 1.0
-     * Solo uno acepta al otro → 0.5
-     * Ninguno → 0.0
-     * Sin preferencias declaradas → acepta cualquier género.
-     */
+    // Nivel 3: compatibilidad mutua de preferencia de genero
+    // Ambos se aceptan -> 1.0 | Solo uno -> 0.5 | Ninguno -> 0.0
+    // Sin preferencias declaradas significa que acepta cualquier genero
     private double level3GenderScore(UserMatchProfile a, UserMatchProfile b) {
         boolean aAcceptsB = acceptsGender(a.getGenderPreferences(), b.getGender());
         boolean bAcceptsA = acceptsGender(b.getGenderPreferences(), a.getGender());
@@ -119,14 +117,33 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
     }
 
     // -------------------------------------------------------------------------
-    // Schedule score: Jaccard sobre slots de 30 minutos por día
+    // Academic score (30% del total)
     // -------------------------------------------------------------------------
 
-    /**
-     * Convierte cada Schedule en slots discretos de SLOT_MINUTES minutos
-     * (ej: Lunes 08:00-09:30 → {LUN-08:00, LUN-08:30, LUN-09:00})
-     * y aplica Jaccard sobre el conjunto de slots.
-     */
+    // Carrera: coincidencia binaria (misma carrera = 1.0, diferente = 0.0)
+    // Semestre: proximidad normalizada (mismo semestre = 1.0, max diferencia = 0.0)
+    private double calculateAcademicScore(UserMatchProfile a, UserMatchProfile b) {
+        double careerScore   = calculateCareerScore(a, b);
+        double semesterScore = calculateSemesterScore(a, b);
+        return W_CAREER * careerScore + W_SEMESTER * semesterScore;
+    }
+
+    private double calculateCareerScore(UserMatchProfile a, UserMatchProfile b) {
+        if (a.getCareer() == null || b.getCareer() == null) return 0.0;
+        return a.getCareer() == b.getCareer() ? 1.0 : 0.0;
+    }
+
+    private double calculateSemesterScore(UserMatchProfile a, UserMatchProfile b) {
+        if (a.getSemester() == null || b.getSemester() == null) return 0.0;
+        double diff = Math.abs(a.getSemester() - b.getSemester());
+        return 1.0 - (diff / MAX_SEMESTER_DIFF);
+    }
+
+    // -------------------------------------------------------------------------
+    // Schedule score (30% del total)
+    // Jaccard sobre slots discretos de SLOT_MINUTES minutos por dia
+    // -------------------------------------------------------------------------
+
     private double calculateScheduleScore(List<Schedule> schedulesA, List<Schedule> schedulesB) {
         if (isEmpty(schedulesA) && isEmpty(schedulesB)) return 1.0;
         if (isEmpty(schedulesA) || isEmpty(schedulesB)) return 0.0;
@@ -144,10 +161,7 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
         return (double) intersection.size() / union.size();
     }
 
-    /**
-     * Genera un set de strings con formato "DIA-HH:mm" cada SLOT_MINUTES minutos
-     * dentro del rango [startTime, endTime).
-     */
+    // Genera slots "DIA-HH:mm" cada SLOT_MINUTES dentro de [startTime, endTime)
     private Set<String> toSlots(List<Schedule> schedules) {
         Set<String> slots = new HashSet<>();
         for (Schedule s : schedules) {
@@ -177,7 +191,6 @@ public class AffinityCalculatorServiceImpl implements AffinityCalculatorService 
     }
 
     private boolean acceptsGender(List<GenderEnum> preferences, GenderEnum gender) {
-        // sin preferencias → acepta cualquier género
         if (preferences == null || preferences.isEmpty()) return true;
         return preferences.contains(gender);
     }
