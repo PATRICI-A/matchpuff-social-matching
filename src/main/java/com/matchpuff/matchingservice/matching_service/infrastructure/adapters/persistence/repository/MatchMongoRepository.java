@@ -9,6 +9,9 @@ import java.util.UUID;
 
 @Repository
 public interface MatchMongoRepository extends MongoRepository<MatchDocument, UUID> {
-    List<MatchDocument> findByRequesterIdOrTargetId(UUID requesterId, UUID targetId);
+    List<MatchDocument> findByRequesterId(UUID requesterId);
+
+    List<MatchDocument> findByTargetId(UUID targetId);
+
     boolean existsByRequesterIdAndTargetId(UUID requesterId, UUID targetId);
 }

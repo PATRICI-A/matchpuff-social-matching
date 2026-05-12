@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -30,25 +29,26 @@ public class MatchRepositoryAdapter implements MatchRepositoryPort {
     }
 
     @Override
-    public List<Match> findByUserId(UUID userId) {
-        return mongoRepository.findByRequesterIdOrTargetId(userId, userId)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public boolean existsByRequesterIdAndTargetId(UUID requesterId, UUID targetId) {
         return mongoRepository.existsByRequesterIdAndTargetId(requesterId, targetId);
     }
 
     @Override
-    public boolean existsById(UUID id) {
-        return mongoRepository.existsById(id);
+    public void deleteById(UUID id) {
+        mongoRepository.deleteById(id);
     }
 
     @Override
-    public void deleteById(UUID id) {
-        mongoRepository.deleteById(id);
+    public List<Match> findByTargetId(UUID targetId) {
+        return mongoRepository.findByTargetId(targetId).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Match> findByRequesterId(UUID requesterId) {
+        return mongoRepository.findByRequesterId(requesterId).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

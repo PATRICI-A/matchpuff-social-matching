@@ -9,8 +9,8 @@ import java.util.UUID;
 public interface MatchRepositoryPort {
     Match save(Match match);
     Optional<Match> findById(UUID id);
-    List<Match> findByUserId(UUID userId);
+    List<Match> findByTargetId(UUID targetId);
+    List<Match> findByRequesterId(UUID requesterId);
     boolean existsByRequesterIdAndTargetId(UUID requesterId, UUID targetId);
-    boolean existsById(UUID id);
     void deleteById(UUID id);
 }

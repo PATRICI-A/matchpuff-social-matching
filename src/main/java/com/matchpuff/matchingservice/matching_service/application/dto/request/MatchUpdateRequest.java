@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 public class MatchUpdateRequest {
 
-    @NotNull(message = "El estado del match es requerido")
+    @NotNull(message = "The match status must not be null")
     private MatchStatus status;
 }
