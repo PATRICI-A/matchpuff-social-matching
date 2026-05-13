@@ -6,6 +6,7 @@ import com.matchpuff.matchingservice.matching_service.application.dto.response.M
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.mapper.MatchApplicationMapper;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
@@ -78,7 +79,7 @@ public class MatchController {
     public ResponseEntity<MatchResponse> updateMatchStatus(
             @Parameter(description = "ID of the match") @PathVariable UUID id,
             @Valid @RequestBody MatchUpdateRequest request) {
-        boolean accept = request.getStatus() == com.matchpuff.matchingservice.matching_service.domain.model.enums.MatchStatus.ACCEPTED;
+        boolean accept = request.getStatus() == MatchStatus.ACCEPTED;
         return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, accept)));
     }
 

@@ -1,6 +1,6 @@
 package com.matchpuff.matchingservice.matching_service.infrastructure.adapters.persistence.entity;
 
-import com.matchpuff.matchingservice.matching_service.domain.model.enums.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

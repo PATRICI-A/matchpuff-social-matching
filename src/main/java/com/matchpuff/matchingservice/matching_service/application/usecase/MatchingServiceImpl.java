@@ -4,7 +4,7 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidI
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
-import com.matchpuff.matchingservice.matching_service.domain.model.enums.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import lombok.RequiredArgsConstructor;

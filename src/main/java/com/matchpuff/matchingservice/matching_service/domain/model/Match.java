@@ -1,6 +1,5 @@
 package com.matchpuff.matchingservice.matching_service.domain.model;
 
-import com.matchpuff.matchingservice.matching_service.domain.model.enums.MatchStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.matchpuff.matchingservice.matching_service.application.dto.response;
 
-import com.matchpuff.matchingservice.matching_service.domain.model.enums.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import lombok.Builder;
 import lombok.Data;
 
