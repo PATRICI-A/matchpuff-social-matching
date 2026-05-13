@@ -4,7 +4,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${MONGODB_URI}
+      uri: ${MONGO_URI}
       database: ${MONGODB_DATABASE}
 
 profile-service:
