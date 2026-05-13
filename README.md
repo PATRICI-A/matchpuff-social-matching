@@ -227,3 +227,5 @@ El código está organizado en las siguientes carpetas:
 
 ---
 *En proceso :<.*
+# matchpuff-social-matching-service
+Lógica de matching y social: conexiones, recomendaciones e interacciones entre usuarios.
