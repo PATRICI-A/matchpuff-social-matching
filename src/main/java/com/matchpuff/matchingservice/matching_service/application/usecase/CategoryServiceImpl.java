@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.Category;
 import com.matchpuff.matchingservice.matching_service.domain.model.Tag;
@@ -24,6 +25,7 @@ public class CategoryServiceImpl implements CategoryUseCasePort {
         String normalizedName = normalizeName(name);
         existsCategoryByName(normalizedName);
         Category category = new Category(name);
+        category.setId(UUID.randomUUID());
         return categoryRepository.save(category);
     }
 
@@ -62,6 +64,7 @@ public class CategoryServiceImpl implements CategoryUseCasePort {
         String normalizedName = normalizeName(name);
         existsTagByName(normalizedName);
         Tag tag = new Tag(name, categoryId);
+        tag.setId(UUID.randomUUID());
         return categoryRepository.save(tag);
     }
 
@@ -105,7 +108,7 @@ public class CategoryServiceImpl implements CategoryUseCasePort {
 
     private void existsCategoryByName(String name) {
         if (categoryRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Category already exists with name: " + name);
+            throw new InvalidInputException("Category already exists with name: " + name);
         }
     }
 
@@ -124,7 +127,7 @@ public class CategoryServiceImpl implements CategoryUseCasePort {
 
     private void existsTagByName(String name) {
         if (categoryRepository.existsTagByName(name)) {
-            throw new IllegalArgumentException("Tag already exists with name: " + name);
+            throw new InvalidInputException("Tag already exists with name: " + name);
         }
     }
 

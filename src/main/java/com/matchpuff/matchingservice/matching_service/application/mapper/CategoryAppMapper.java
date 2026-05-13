@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateCategoryRequest;
@@ -24,16 +25,17 @@ public interface CategoryAppMapper {
 
     List<CategoryResponse> toResponseCategoryList(List<Category> categories);
 
+    @Mapping(target = "categoryId", source = "categoryID")
     TagResponse toResponse(Tag tag);
 
     List<TagResponse> toResponseTagList(List<Tag> tags);
 
-
+    @Mapping(target = "id", ignore = true)
     Category toDomain(CreateCategoryRequest request);
-    void updateDomain(UpdateCategoryRequest request, @MappingTarget Category category);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "categoryID", source = "categoryId")
     Tag toDomain(CreateTagRequest request);
-    void updateDomain(UpdateTagRequest request, @MappingTarget Tag tag);
 
     default List<CategoryWithTagsResponse> toResponseCategoryWithTags(Map<Category, List<Tag>> categoryWithTags) {
         List<CategoryWithTagsResponse> responses = new ArrayList<>();
