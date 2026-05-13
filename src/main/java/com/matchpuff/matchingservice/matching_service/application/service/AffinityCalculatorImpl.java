@@ -13,10 +13,6 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
     private static final double W_ACADEMIC = 0.30;
     private static final double W_SCHEDULE = 0.30;
 
-    private static final double W_CATEGORY = 0.30;
-    private static final double W_TAG_NAME = 0.50;
-    private static final double W_GENDER = 0.20;
-
     private static final double W_CAREER = 0.60;
     private static final double W_SEMESTER = 0.40;
 
@@ -24,10 +20,9 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
 
     @Override
     public AffinityScore calculate(UserMatchProfileDto a, UserMatchProfileDto b) {
-
         double interest = calculateInterestScore(a, b);
         double academic = calculateAcademicScore(a, b);
-        double schedule = 0.5; // placeholder (luego conectas schedules reales)
+        double schedule = calculateScheduleScore(a, b);
 
         double total = W_INTEREST * interest
                      + W_ACADEMIC * academic
@@ -45,9 +40,12 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
     // ---------------- INTEREST ----------------
 
     private double calculateInterestScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+        Set<String> tagsA = normalizeTags(a.getTags());
+        Set<String> tagsB = normalizeTags(b.getTags());
 
-        Set<String> tagsA = new HashSet<>(a.getTags());
-        Set<String> tagsB = new HashSet<>(b.getTags());
+        if (tagsA.isEmpty() && tagsB.isEmpty()) {
+            return 0.0;
+        }
 
         Set<String> intersection = new HashSet<>(tagsA);
         intersection.retainAll(tagsB);
@@ -55,28 +53,77 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
         Set<String> union = new HashSet<>(tagsA);
         union.addAll(tagsB);
 
-        double categoryScore = union.isEmpty() ? 0 : (double) intersection.size() / union.size();
-
-        double tagNameScore = categoryScore; // simplificado (misma lógica base)
-
-        double genderScore = 1.0; // placeholder (si agregas gender luego lo activas)
-
-        return W_CATEGORY * categoryScore
-             + W_TAG_NAME * tagNameScore
-             + W_GENDER * genderScore;
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
     }
 
     // ---------------- ACADEMIC ----------------
 
     private double calculateAcademicScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+        double careerScore = sameNormalizedValue(a.getCareer(), b.getCareer()) ? 1.0 : 0.0;
 
-        double careerScore = a.getCareer().equals(b.getCareer()) ? 1.0 : 0.0;
-
-        double diff = Math.abs(a.getSemester() - b.getSemester());
-        double semesterScore = 1.0 - (diff / MAX_SEMESTER_DIFF);
+        double semesterScore = 0.0;
+        if (a.getSemester() != null && b.getSemester() != null) {
+            double diff = Math.abs(a.getSemester() - b.getSemester());
+            semesterScore = Math.max(0.0, 1.0 - (diff / MAX_SEMESTER_DIFF));
+        }
 
         return W_CAREER * careerScore
              + W_SEMESTER * semesterScore;
+    }
+
+    // ---------------- SCHEDULE ----------------
+
+    private double calculateScheduleScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+        Set<String> schedulesA = normalizeSchedules(a.getSchedulesAvailable());
+        Set<String> schedulesB = normalizeSchedules(b.getSchedulesAvailable());
+
+        if (schedulesA.isEmpty() || schedulesB.isEmpty()) {
+            return 0.0;
+        }
+
+        Set<String> intersection = new HashSet<>(schedulesA);
+        intersection.retainAll(schedulesB);
+
+        Set<String> union = new HashSet<>(schedulesA);
+        union.addAll(schedulesB);
+
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
+    }
+
+    private Set<String> normalizeTags(List<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Set<String> normalized = new HashSet<>();
+        for (String tag : tags) {
+            if (tag != null && !tag.isBlank()) {
+                normalized.add(tag.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalized;
+    }
+
+    private Set<String> normalizeSchedules(List<String> schedules) {
+        if (schedules == null || schedules.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Set<String> normalized = new HashSet<>();
+        for (String schedule : schedules) {
+            if (schedule != null && !schedule.isBlank()) {
+                normalized.add(schedule.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalized;
+    }
+
+    private boolean sameNormalizedValue(String left, String right) {
+        if (left == null || right == null) {
+            return false;
+        }
+
+        return left.trim().equalsIgnoreCase(right.trim());
     }
 
     private double round(double v) {

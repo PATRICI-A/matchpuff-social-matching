@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-@EnableFeignClients( basePackages = "com.matchpuff.matchingservice")
+@EnableFeignClients(basePackages = "com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client")
 public class FeignConfig {
 
 }

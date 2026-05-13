@@ -1,0 +1,18 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: ${MONGODB_DATABASE}
+
+profile-service:
+  url: ${PROFILE_SERVICE_URL}
+  path: ${PROFILE_SERVICE_PATH}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

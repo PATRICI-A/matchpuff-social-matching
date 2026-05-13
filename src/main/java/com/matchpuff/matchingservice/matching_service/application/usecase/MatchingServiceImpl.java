@@ -22,11 +22,10 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
         if (matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)) {
-            throw new IllegalArgumentException("Ya existe un match entre estos dos usuarios");
+            throw new IllegalArgumentException("Already exists a match request between requester and target");
         }
 
         Match match = new Match();
-        match.setIdMatch(UUID.randomUUID());
         match.setRequesterId(requesterId);
         match.setTargetId(targetId);
         match.setStatus(MatchStatus.PENDING);
@@ -65,7 +64,7 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         existsMatchById(matchId);
         Match match = matchRepository.findById(matchId).orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
         if (match.getStatus() != MatchStatus.PENDING) {
-            throw new IllegalStateException("Solo se pueden responder solicitudes pendientes");
+            throw new IllegalStateException("Only pending requests can be responded to");
         }
         match.setStatus(accept ? MatchStatus.ACCEPTED : MatchStatus.REJECTED);
         match.setUpdatedAt(LocalDateTime.now());

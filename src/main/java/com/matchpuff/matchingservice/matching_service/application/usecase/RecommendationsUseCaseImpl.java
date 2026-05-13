@@ -1,7 +1,9 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
 
@@ -51,6 +53,18 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
     }
 
     @Override
+    public List<UserMatchProfileDto> getRecommendedProfilesForUser(UUID userId) {
+        Map<UUID, AffinityScore> recommendations = getRecommendationsForUser(userId);
+        List<UserMatchProfileDto> allProfiles = profileServicePort.getAllProfiles();
+
+        return allProfiles.stream()
+                .filter(profile -> !profile.getId().equals(userId))
+                .sorted(Comparator.comparingDouble((UserMatchProfileDto profile) ->
+                        recommendations.getOrDefault(profile.getId(), new AffinityScore()).getTotalScore()).reversed())
+                .toList();
+    }
+
+    @Override
     public AffinityScore calculateAffinityScore(UUID userId1, UUID userId2) {
 
         UserMatchProfileDto a =
@@ -60,5 +74,12 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
                 profileServicePort.getProfileById(userId2);
 
         return affinityCalculator.calculate(a, b);
+    }
+
+    @Override
+    public List<UUID> getRecommendedUserIdsForUser(UUID userId) {
+        return getRecommendedProfilesForUser(userId).stream()
+            .map(UserMatchProfileDto::getId)
+                .toList();
     }
 }

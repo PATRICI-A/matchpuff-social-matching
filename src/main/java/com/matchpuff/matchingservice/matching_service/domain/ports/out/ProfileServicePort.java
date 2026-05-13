@@ -8,5 +8,4 @@ import com.matchpuff.matchingservice.matching_service.infrastructure.external.pr
 public interface ProfileServicePort {
     UserMatchProfileDto getProfileById(UUID userId);
     List<UserMatchProfileDto> getAllProfiles();
-
 }

@@ -6,8 +6,13 @@ import com.matchpuff.matchingservice.matching_service.application.dto.request.Ma
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.AffinityScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -24,11 +29,6 @@ public interface MatchApplicationMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Match toDomain(MatchRequest request);
 
-    MatchResponse toResponse(Match match);
-
-    @Mapping(target = "score", source = "totalScore")
-    @Mapping(target = "academicScore", ignore = true)
-    AffinityScoreResponse toResponse(AffinityScore affinityScore);
 
     @Mapping(target = "totalScore", source = "score")
     @Mapping(target = "academicScore", ignore = true)
@@ -48,4 +48,15 @@ public interface MatchApplicationMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateMatchFromRequest(MatchUpdateRequest request, @MappingTarget Match match);
+
+
+    MatchResponse toResponse(Match match);
+
+    @Mapping(target = "score", source = "totalScore")
+    @Mapping(target = "academicScore", ignore = true)
+    AffinityScoreResponse toResponse(AffinityScore affinityScore);
+    
+    List<MatchResponse> toResponseList(List<Match> matches);
+
+    RecommendationResponse toRecommendationResponse(UUID userId, List<UUID> recommendedUserIds);
 }
