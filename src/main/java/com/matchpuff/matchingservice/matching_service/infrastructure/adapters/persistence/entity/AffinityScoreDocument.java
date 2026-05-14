@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AffinityScoreDocument {
-    private double score;
+    private double totalScore;
     private double interestScore;
     private double academicScore;
     private double scheduleScore;
