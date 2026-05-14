@@ -5,6 +5,7 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFound
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class MatchingServiceImplTest {
 
     @Mock
     private MatchRepositoryPort matchRepository;
+
+    @Mock
+    private RecommendationsUseCasePort recommendationsUseCase;
 
     @InjectMocks
     private MatchingServiceImpl matchingService;
@@ -58,6 +62,7 @@ class MatchingServiceImplTest {
     @Test
     void createMatch_success() {
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(false);
+        when(recommendationsUseCase.calculateAffinityScore(requesterId, targetId)).thenReturn(pendingMatch.getAffinityScore());
         when(matchRepository.save(any(Match.class))).thenReturn(pendingMatch);
 
         Match result = matchingService.createMatch(requesterId, targetId);

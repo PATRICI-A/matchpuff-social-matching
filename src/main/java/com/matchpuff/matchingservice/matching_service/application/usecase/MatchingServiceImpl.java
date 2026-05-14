@@ -2,10 +2,10 @@ package com.matchpuff.matchingservice.matching_service.application.usecase;
 
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
-import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +19,7 @@ import java.util.UUID;
 public class MatchingServiceImpl implements MatchUseCasePort {
 
     private final MatchRepositoryPort matchRepository;
+    private final RecommendationsUseCasePort recommendationsUseCase;
 
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
@@ -31,9 +32,10 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         match.setRequesterId(requesterId);
         match.setTargetId(targetId);
         match.setStatus(MatchStatus.PENDING);
-        match.setAffinityScore(new AffinityScore());
         match.setCreatedAt(LocalDateTime.now());
         match.setUpdatedAt(LocalDateTime.now());
+
+        match.setAffinityScore(recommendationsUseCase.calculateAffinityScore(requesterId, targetId));
 
         return matchRepository.save(match);
     }

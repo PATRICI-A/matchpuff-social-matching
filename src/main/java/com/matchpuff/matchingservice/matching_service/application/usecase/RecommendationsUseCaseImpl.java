@@ -39,20 +39,20 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
 
     @Override
     public List<MatchProfile> getRecommendedProfilesForUser(UUID userId) {
-        MatchProfile requester = profileServicePort.getProfileById(userId);
-        List<MatchProfile> allProfiles = profileServicePort.getAllProfiles();
-
-        return allProfiles.stream()
-                .filter(profile -> !profile.getId().equals(userId))
+        Map<UUID, AffinityScore> scores = getRecommendationsForUser(userId);
+        return profileServicePort.getAllProfiles().stream()
+                .filter(profile -> scores.containsKey(profile.getId()))
                 .sorted(Comparator.comparingDouble((MatchProfile profile) ->
-                        affinityCalculator.calculate(requester, profile).getTotalScore()).reversed())
+                        scores.get(profile.getId()).getTotalScore()).reversed())
                 .toList();
     }
 
     @Override
     public List<UUID> getRecommendedUserIdsForUser(UUID userId) {
-        return getRecommendedProfilesForUser(userId).stream()
-                .map(MatchProfile::getId)
+        return getRecommendationsForUser(userId).entrySet().stream()
+                .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
+                        Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
+                .map(Map.Entry::getKey)
                 .toList();
     }
 
