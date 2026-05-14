@@ -55,12 +55,6 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     }
 
     @Override
-    public void deleteMatch(UUID matchId) {
-        existsMatchById(matchId);
-        matchRepository.deleteById(matchId);
-    }
-
-    @Override
     public Match respondToMatchRequest(UUID matchId, boolean accept) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
@@ -70,11 +64,5 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         match.setStatus(accept ? MatchStatus.ACCEPTED : MatchStatus.REJECTED);
         match.setUpdatedAt(LocalDateTime.now());
         return matchRepository.save(match);
-    }
-
-    private void existsMatchById(UUID matchId) {
-        if (matchRepository.findById(matchId).isEmpty()) {
-            throw new NotFoundException("Match not found with ID: " + matchId);
-        }
     }
 }

@@ -26,4 +26,6 @@ public interface CategoryUseCasePort {
 
 
     Map<Category, List<Tag>> getAllCategoriesWithTags();
+
+    Map<Category, List<Tag>> createCategoryWithTags(String name, List<String> tagNames);
 }

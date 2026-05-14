@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.CategoryUseCasePort;
 import com.matchpuff.matchingservice.matching_service.application.mapper.CategoryAppMapper;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateCategoryRequest;
+import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateCategoryWithTagsRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateTagRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.UpdateCategoryRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.UpdateTagRequest;
@@ -154,4 +155,17 @@ public class CategoryController {
     public ResponseEntity<List<CategoryWithTagsResponse>> getAllCategoriesWithTags() {
         return ResponseEntity.ok(categoryAppMapper.toResponseCategoryWithTags(categoryUseCase.getAllCategoriesWithTags()));
     }
+
+
+    // -------------------- OTHER ENDPOINTS --------------------
+
+    @PostMapping("/with-tags")
+    @Operation(summary = "Create a category with tags", description = "Creates a new category along with its associated tags in a single request")
+    @ApiResponse(responseCode = "201", description = "Category with tags created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid data or category/tag already exists")
+    public ResponseEntity<CategoryWithTagsResponse> createCategoryWithTags(@Valid @RequestBody CreateCategoryWithTagsRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(categoryAppMapper.toSingleResponseCategoryWithTags(categoryUseCase.createCategoryWithTags(request.getName(), request.getTagNames())));
+    }
+
 }

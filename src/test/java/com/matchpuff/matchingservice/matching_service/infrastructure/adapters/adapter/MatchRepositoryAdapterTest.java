@@ -107,14 +107,6 @@ class MatchRepositoryAdapterTest {
         assertThat(adapter.existsByRequesterIdAndTargetId(requesterId, targetId)).isFalse();
     }
 
-    // ======================== deleteById ========================
-
-    @Test
-    void deleteById_callsRepository() {
-        adapter.deleteById(matchId);
-        verify(mongoRepository).deleteById(matchId);
-    }
-
     // ======================== findByTargetId ========================
 
     @Test

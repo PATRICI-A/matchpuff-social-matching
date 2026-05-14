@@ -12,6 +12,5 @@ public interface MatchUseCasePort {
     List<Match> findByRequesterId(UUID requesterId);
     List<Match> findByTargetId(UUID targetId);
     Match respondToMatchRequest(UUID matchId, boolean accept);
-    void deleteMatch(UUID matchId);
 
 }
