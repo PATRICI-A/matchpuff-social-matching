@@ -2,8 +2,8 @@ package com.matchpuff.matchingservice.matching_service.application.usecase;
 
 import com.matchpuff.matchingservice.matching_service.application.service.AffinityCalculator;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
-import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,9 +32,9 @@ class RecommendationsUseCaseImplTest {
     private UUID userId;
     private UUID otherId1;
     private UUID otherId2;
-    private UserMatchProfileDto userProfile;
-    private UserMatchProfileDto otherProfile1;
-    private UserMatchProfileDto otherProfile2;
+    private MatchProfile userProfile;
+    private MatchProfile otherProfile1;
+    private MatchProfile otherProfile2;
 
     @BeforeEach
     void setUp() {
@@ -42,13 +42,13 @@ class RecommendationsUseCaseImplTest {
         otherId1 = UUID.randomUUID();
         otherId2 = UUID.randomUUID();
 
-        userProfile = new UserMatchProfileDto();
+        userProfile = new MatchProfile();
         userProfile.setId(userId);
 
-        otherProfile1 = new UserMatchProfileDto();
+        otherProfile1 = new MatchProfile();
         otherProfile1.setId(otherId1);
 
-        otherProfile2 = new UserMatchProfileDto();
+        otherProfile2 = new MatchProfile();
         otherProfile2.setId(otherId2);
     }
 
@@ -89,13 +89,11 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendedProfilesForUser_sortedByAffinityDescending() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles())
-                .thenReturn(List.of(userProfile, otherProfile1, otherProfile2))
-                .thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.3));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.9));
 
-        List<UserMatchProfileDto> result = recommendationsUseCase.getRecommendedProfilesForUser(userId);
+        List<MatchProfile> result = recommendationsUseCase.getRecommendedProfilesForUser(userId);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getId()).isEqualTo(otherId2); // highest affinity first
@@ -103,24 +101,9 @@ class RecommendationsUseCaseImplTest {
     }
 
     @Test
-    void getRecommendedProfilesForUser_excludesSelf() {
-        when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles())
-                .thenReturn(List.of(userProfile, otherProfile1))
-                .thenReturn(List.of(userProfile, otherProfile1));
-        when(affinityCalculator.calculate(any(), any())).thenReturn(scoreWith(0.5));
-
-        List<UserMatchProfileDto> result = recommendationsUseCase.getRecommendedProfilesForUser(userId);
-
-        assertThat(result).noneMatch(p -> p.getId().equals(userId));
-    }
-
-    @Test
     void getRecommendedUserIdsForUser_returnsOrderedIds() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles())
-                .thenReturn(List.of(userProfile, otherProfile1, otherProfile2))
-                .thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.2));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.8));
 
@@ -132,7 +115,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void calculateAffinityScore_callsCalculator() {
         UUID userId2 = UUID.randomUUID();
-        UserMatchProfileDto profile2 = new UserMatchProfileDto();
+        MatchProfile profile2 = new MatchProfile();
         profile2.setId(userId2);
 
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);

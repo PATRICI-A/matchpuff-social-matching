@@ -9,7 +9,7 @@ import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
-import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -102,7 +102,7 @@ public class MatchController {
 
     @GetMapping("/recommendations/{userId}/profiles")
     @Operation(summary = "Get recommended profiles for a user", description = "Returns profiles ordered by affinity score")
-    public ResponseEntity<List<UserMatchProfileDto>> getRecommendedProfiles(@PathVariable UUID userId) {
+    public ResponseEntity<List<MatchProfile>> getRecommendedProfiles(@PathVariable UUID userId) {
         return ResponseEntity.ok(recommendationsUseCase.getRecommendedProfilesForUser(userId));
     }
 }

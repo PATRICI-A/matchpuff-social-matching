@@ -1,7 +1,7 @@
 package com.matchpuff.matchingservice.matching_service.application.service;
 
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
-import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,7 +19,7 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
     private static final double MAX_SEMESTER_DIFF = 9.0;
 
     @Override
-    public AffinityScore calculate(UserMatchProfileDto a, UserMatchProfileDto b) {
+    public AffinityScore calculate(MatchProfile a, MatchProfile b) {
         double interest = calculateInterestScore(a, b);
         double academic = calculateAcademicScore(a, b);
         double schedule = calculateScheduleScore(a, b);
@@ -39,7 +39,7 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
 
     // ---------------- INTEREST ----------------
 
-    private double calculateInterestScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+    private double calculateInterestScore(MatchProfile a, MatchProfile b) {
         Set<String> tagsA = normalizeTags(a.getTags());
         Set<String> tagsB = normalizeTags(b.getTags());
 
@@ -58,7 +58,7 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
 
     // ---------------- ACADEMIC ----------------
 
-    private double calculateAcademicScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+    private double calculateAcademicScore(MatchProfile a, MatchProfile b) {
         double careerScore = sameNormalizedValue(a.getCareer(), b.getCareer()) ? 1.0 : 0.0;
 
         double semesterScore = 0.0;
@@ -73,7 +73,7 @@ public class AffinityCalculatorImpl implements AffinityCalculator {
 
     // ---------------- SCHEDULE ----------------
 
-    private double calculateScheduleScore(UserMatchProfileDto a, UserMatchProfileDto b) {
+    private double calculateScheduleScore(MatchProfile a, MatchProfile b) {
         Set<String> schedulesA = normalizeSchedules(a.getSchedulesAvailable());
         Set<String> schedulesB = normalizeSchedules(b.getSchedulesAvailable());
 

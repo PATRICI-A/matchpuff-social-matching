@@ -138,7 +138,7 @@ class CategoryControllerTest {
         when(categoryAppMapper.toResponseCategoryList(List.of(category)))
                 .thenReturn(List.of(categoryResponse));
 
-        mockMvc.perform(get("/api/v1/categories/categories/all"))
+        mockMvc.perform(get("/api/v1/categories/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(categoryId.toString()));
     }
@@ -226,7 +226,7 @@ class CategoryControllerTest {
         when(categoryUseCase.getTagsByCategoryId(categoryId)).thenReturn(List.of(tag));
         when(categoryAppMapper.toResponseTagList(List.of(tag))).thenReturn(List.of(tagResponse));
 
-        mockMvc.perform(get("/api/v1/categories/categories/{categoryId}/tags", categoryId))
+        mockMvc.perform(get("/api/v1/categories/{categoryId}/tags", categoryId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(tagId.toString()));
     }

@@ -12,11 +12,11 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidI
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.entrypoints.advice.GlobalExceptionHandler;
-import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -288,7 +288,7 @@ class MatchControllerTest {
 
     @Test
     void getRecommendedProfiles_returns200() throws Exception {
-        UserMatchProfileDto profile = new UserMatchProfileDto();
+        MatchProfile profile = new MatchProfile();
         profile.setId(targetId);
         profile.setCareer("Engineering");
 

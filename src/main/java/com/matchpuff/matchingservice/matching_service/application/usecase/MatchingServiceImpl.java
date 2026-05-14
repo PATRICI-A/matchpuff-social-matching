@@ -40,8 +40,8 @@ public class MatchingServiceImpl implements MatchUseCasePort {
 
     @Override
     public Match getMatch(UUID matchId) {
-        existsMatchById(matchId);
-        return matchRepository.findById(matchId).orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
+        return matchRepository.findById(matchId)
+                .orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
     }
 
     @Override
@@ -59,12 +59,11 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         existsMatchById(matchId);
         matchRepository.deleteById(matchId);
     }
-    
-    
+
     @Override
     public Match respondToMatchRequest(UUID matchId, boolean accept) {
-        existsMatchById(matchId);
-        Match match = matchRepository.findById(matchId).orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
         if (match.getStatus() != MatchStatus.PENDING) {
             throw new InvalidInputException("Only pending requests can be responded to");
         }
@@ -73,14 +72,9 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         return matchRepository.save(match);
     }
 
-    //-- HElPER METHODS ----------------------------------------------------------------
-
-    public boolean existsMatchById(UUID matchId) {
+    private void existsMatchById(UUID matchId) {
         if (matchRepository.findById(matchId).isEmpty()) {
             throw new NotFoundException("Match not found with ID: " + matchId);
         }
-        return true;
     }
-
-    
 }

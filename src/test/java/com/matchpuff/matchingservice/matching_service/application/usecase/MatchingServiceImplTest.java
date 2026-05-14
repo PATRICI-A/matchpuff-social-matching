@@ -182,23 +182,4 @@ class MatchingServiceImplTest {
         assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, true))
                 .isInstanceOf(NotFoundException.class);
     }
-
-    // ======================== HELPER ========================
-
-    @Test
-    void existsMatchById_found_returnsTrue() {
-        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
-
-        boolean result = matchingService.existsMatchById(matchId);
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void existsMatchById_notFound_throwsNotFoundException() {
-        when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> matchingService.existsMatchById(matchId))
-                .isInstanceOf(NotFoundException.class);
-    }
 }

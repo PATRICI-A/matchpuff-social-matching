@@ -1,7 +1,7 @@
 package com.matchpuff.matchingservice.matching_service.application.service;
 
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
-import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,24 +21,18 @@ class AffinityCalculatorImplTest {
         calculator = new AffinityCalculatorImpl();
     }
 
-    private UserMatchProfileDto buildProfile(UUID id, String career, Integer semester,
-                                             List<String> tags, List<String> schedules) {
-        UserMatchProfileDto dto = new UserMatchProfileDto();
-        dto.setId(id);
-        dto.setCareer(career);
-        dto.setSemester(semester);
-        dto.setTags(tags);
-        dto.setSchedulesAvailable(schedules);
-        return dto;
+    private MatchProfile buildProfile(UUID id, String career, Integer semester,
+                                      List<String> tags, List<String> schedules) {
+        return new MatchProfile(id, career, semester, tags, schedules);
     }
 
     @Test
     void calculate_perfectMatch_returnsHighScore() {
         UUID id1 = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
-        UserMatchProfileDto a = buildProfile(id1, "Engineering", 3,
+        MatchProfile a = buildProfile(id1, "Engineering", 3,
                 Arrays.asList("java", "spring"), Arrays.asList("MONDAY_8AM-10AM", "FRIDAY_2PM-4PM"));
-        UserMatchProfileDto b = buildProfile(id2, "Engineering", 3,
+        MatchProfile b = buildProfile(id2, "Engineering", 3,
                 Arrays.asList("java", "spring"), Arrays.asList("MONDAY_8AM-10AM", "FRIDAY_2PM-4PM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -51,9 +45,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_noCommonTags_returnsZeroInterestScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "spring"), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("python", "django"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -63,9 +57,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_bothEmptyTags_returnsZeroInterestScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -75,9 +69,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_nullTags_returnsZeroInterestScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 null, Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 null, Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -87,9 +81,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_partialTagMatch_returnsJaccardScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "spring", "docker"), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "python"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -100,9 +94,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_sameCareer_getsCareerBonus() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 5,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 5,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 5,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 5,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -113,9 +107,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_differentCareer_noCareerBonus() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 5,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 5,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Medicine", 5,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Medicine", 5,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -126,9 +120,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_nullSemesters_semesterScoreZero() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", null,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", null,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", null,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", null,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -139,9 +133,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_largeSemesterDiff_semesterScoreZero() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 1,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 1,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 10,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 10,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -153,9 +147,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_noCommonSchedules_returnsZeroScheduleScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Arrays.asList("FRIDAY_2PM-4PM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -165,9 +159,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_emptySchedules_returnsZeroScheduleScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Arrays.asList("FRIDAY_2PM-4PM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -177,9 +171,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_nullSchedules_returnsZeroScheduleScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), null);
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), null);
 
         AffinityScore score = calculator.calculate(a, b);
@@ -189,9 +183,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_caseInsensitiveTags_matchesCorrectly() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("Java", "SPRING"), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "spring"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -201,9 +195,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_caseInsensitiveCareer_matchesCorrectly() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "ENGINEERING", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "ENGINEERING", 3,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "engineering", 3,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -213,9 +207,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_nullCareer_returnsZeroCareerScore() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), null, 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), null, 3,
                 Collections.emptyList(), Collections.emptyList());
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Collections.emptyList(), Collections.emptyList());
 
         AffinityScore score = calculator.calculate(a, b);
@@ -226,9 +220,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_totalScoreIsWeightedAverage() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java"), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -241,9 +235,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_tagsWithWhitespace_normalizedCorrectly() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("  java  ", " spring "), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "spring"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
@@ -253,9 +247,9 @@ class AffinityCalculatorImplTest {
 
     @Test
     void calculate_tagsWithBlankStrings_areIgnored() {
-        UserMatchProfileDto a = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile a = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java", "", "  "), Arrays.asList("MONDAY_8AM-10AM"));
-        UserMatchProfileDto b = buildProfile(UUID.randomUUID(), "Engineering", 3,
+        MatchProfile b = buildProfile(UUID.randomUUID(), "Engineering", 3,
                 Arrays.asList("java"), Arrays.asList("MONDAY_8AM-10AM"));
 
         AffinityScore score = calculator.calculate(a, b);
