@@ -12,6 +12,7 @@ public interface CategoryRepositoryPort {
 
     Category save(Category category);
     Optional<Category> findById(UUID id);
+    Optional<Category> findByName(String name);
     List<Category> findAll();
     boolean existsById(UUID id);
     boolean existsByName(String name);

@@ -25,7 +25,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/matches")
-@Tag(name = "Matches", description = "CRUD of matches and user recommendations")
+@Tag(name = "Matches", description = "Match requests and user recommendations")
 @RequiredArgsConstructor
 public class MatchController {
 
@@ -35,8 +35,8 @@ public class MatchController {
 
     // ---------------- CREATE MATCH ----------------
     @PostMapping
-    @Operation(summary = "Create a match", description = "Creates a new match request between two users")
-    @ApiResponse(responseCode = "201", description = "Match created successfully")
+    @Operation(summary = "Send a match request", description = "Sends a match request from the requester to the target user")
+    @ApiResponse(responseCode = "201", description = "Match request sent successfully")
     @ApiResponse(responseCode = "400", description = "Invalid data or match already exists")
     public ResponseEntity<MatchResponse> createMatch(@Valid @RequestBody MatchRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -81,16 +81,6 @@ public class MatchController {
             @Valid @RequestBody MatchUpdateRequest request) {
         boolean accept = request.getStatus() == MatchStatus.ACCEPTED;
         return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, accept)));
-    }
-
-    // ---------------- DELETE ----------------
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a match", description = "Deletes a match by its ID")
-    @ApiResponse(responseCode = "204", description = "Match deleted")
-    @ApiResponse(responseCode = "404", description = "Match not found")
-    public ResponseEntity<Void> deleteMatch(@Parameter(description = "ID of the match") @PathVariable UUID id) {
-        matchUseCase.deleteMatch(id);
-        return ResponseEntity.noContent().build();
     }
 
     // ---------------- GET RECOMMENDATIONS ----------------

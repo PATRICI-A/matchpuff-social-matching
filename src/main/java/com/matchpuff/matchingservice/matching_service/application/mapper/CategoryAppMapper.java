@@ -6,12 +6,9 @@ import java.util.Map;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateCategoryRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.CreateTagRequest;
-import com.matchpuff.matchingservice.matching_service.application.dto.request.UpdateCategoryRequest;
-import com.matchpuff.matchingservice.matching_service.application.dto.request.UpdateTagRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.CategoryResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.CategoryWithTagsResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.TagResponse;
@@ -48,5 +45,13 @@ public interface CategoryAppMapper {
         }
 
         return responses;
+    }
+
+    default CategoryWithTagsResponse toSingleResponseCategoryWithTags(Map<Category, List<Tag>> categoryWithTags) {
+        Map.Entry<Category, List<Tag>> entry = categoryWithTags.entrySet().iterator().next();
+        return new CategoryWithTagsResponse(
+                entry.getKey().getId(),
+                entry.getKey().getName(),
+                toResponseTagList(entry.getValue()));
     }
 }

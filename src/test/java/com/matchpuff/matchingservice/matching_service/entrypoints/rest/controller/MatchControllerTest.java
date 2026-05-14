@@ -251,24 +251,6 @@ class MatchControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ======================== DELETE ========================
-
-    @Test
-    void deleteMatch_success_returns204() throws Exception {
-        doNothing().when(matchUseCase).deleteMatch(matchId);
-
-        mockMvc.perform(delete("/api/v1/matches/{id}", matchId))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void deleteMatch_notFound_returns404() throws Exception {
-        doThrow(new NotFoundException("Match not found")).when(matchUseCase).deleteMatch(matchId);
-
-        mockMvc.perform(delete("/api/v1/matches/{id}", matchId))
-                .andExpect(status().isNotFound());
-    }
-
     // ======================== RECOMMENDATIONS ========================
 
     @Test

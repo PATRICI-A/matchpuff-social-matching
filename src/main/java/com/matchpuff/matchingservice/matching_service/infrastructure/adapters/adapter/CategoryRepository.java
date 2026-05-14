@@ -37,6 +37,12 @@ public class CategoryRepository implements CategoryRepositoryPort {
     }
 
     @Override
+    public Optional<Category> findByName(String name) {
+        return mongoCategoryRepository.findByName(name)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public List<Category> findAll() {
         return mongoCategoryRepository.findAll().stream()
                 .map(mapper::toDomain)
