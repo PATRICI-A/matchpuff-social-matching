@@ -1098,6 +1098,8 @@ El **Global Exception Handler** captura y maneja todas las excepciones del siste
 
 ## 9. 🧪 Evidencia de las pruebas y cómo ejecutarlas
 
+
+
 El microservicio de **Social Matching** implementa una **estrategia integral de pruebas** que garantiza la calidad, funcionalidad y confiabilidad del código mediante pruebas unitarias cubiertas con JaCoCo.
 
 ---
@@ -1202,7 +1204,9 @@ void createMatch_shouldCalculateAffinityAndSaveAsPending() {
 
 ### 🖼️ Evidencias de ejecución
 
-*(Adjunta aquí la captura del reporte JaCoCo)*
+![Captura](docs/images/Jacoco.png)
+
+![captura](docs/images/PruebasUnitarias.png)
 
 ---
 
@@ -1396,6 +1400,7 @@ Esto levanta:
 
 ## 12. ☁️ CI/CD y Despliegue en Azure
 
+
 El proyecto implementa un **pipeline automatizado** con **GitHub Actions** para garantizar la calidad del código y el despliegue continuo en **Azure ECS**.
 
 ---
@@ -1403,6 +1408,8 @@ El proyecto implementa un **pipeline automatizado** con **GitHub Actions** para 
 ### 🔗 Enlaces de Despliegue
 
 *(Adjunta aquí la URL del servicio desplegado en Azure)*
+
+![Captura](docs/images/Despliegue.png)
 
 <div align="center">
 
