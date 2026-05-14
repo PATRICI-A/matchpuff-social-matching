@@ -27,7 +27,8 @@ public class ProdSecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
-                    "/api/v1/categories/**"
+                    "/api/v1/categories/**",
+                    "/api/v1/matches/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             );

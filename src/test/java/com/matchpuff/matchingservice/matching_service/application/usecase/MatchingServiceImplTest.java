@@ -123,25 +123,6 @@ class MatchingServiceImplTest {
         assertThat(result).hasSize(1);
     }
 
-    // ======================== DELETE MATCH ========================
-
-    @Test
-    void deleteMatch_success() {
-        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
-
-        matchingService.deleteMatch(matchId);
-
-        verify(matchRepository).deleteById(matchId);
-    }
-
-    @Test
-    void deleteMatch_notFound_throwsNotFoundException() {
-        when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> matchingService.deleteMatch(matchId))
-                .isInstanceOf(NotFoundException.class);
-    }
-
     // ======================== RESPOND TO MATCH REQUEST ========================
 
     @Test

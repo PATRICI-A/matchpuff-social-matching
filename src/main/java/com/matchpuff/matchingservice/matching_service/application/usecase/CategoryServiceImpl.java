@@ -141,4 +141,23 @@ public class CategoryServiceImpl implements CategoryUseCasePort {
         return categoryRepository.findAllCategoriesWithTags();
     }
 
+    @Override
+    public Map<Category, List<Tag>> createCategoryWithTags(String name, List<String> tagNames) {
+        String normalizedName = normalizeName(name);
+
+        Category category = categoryRepository.findByName(normalizedName)
+                .orElseGet(() -> {
+                    return createCategory(name);
+                });
+
+        for (String tagName : tagNames) {
+            String normalizedTagName = normalizeName(tagName);
+            if (!categoryRepository.existsTagByName(normalizedTagName)) {
+                createTag(tagName, category.getId());
+            }
+        }
+
+        return Map.of(category, categoryRepository.findTagsByCategoryId(category.getId()));
+    }
+
 }
