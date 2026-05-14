@@ -86,7 +86,7 @@ El microservicio de Social Matching tiene como objetivo gestionar toda la lógic
     </tr>
     <tr>
       <td><strong>Cálculo de Afinidad</strong></td>
-      <td>Calcula automáticamente un score de afinidad al crear un match, combinando compatibilidad interes comunes .</td>
+      <td>Calcula automáticamente un score de afinidad al crear un match, combinando compatibilidad interes comunes, disponibilidad horaria y programa academico.</td>
     </tr>
     <tr>
       <td><strong>Recomendaciones</strong></td>
@@ -761,7 +761,7 @@ El microservicio se integra con otros sistemas del ecosistema Matchpuff.
 ---
 ### 📊 Diagrama de base de datos
 
-*(Adjunta aquí el diagrama de persistencia)*
+![Captura](docs/uml/Persistencia.jpg)
 
 El microservicio de Social Matching utiliza **MongoDB** como motor de base de datos NoSQL. Contiene dos colecciones principales: `matches` y `categories`.
 
@@ -820,7 +820,7 @@ El microservicio de Social Matching utiliza **MongoDB** como motor de base de da
 
 ### 📦 Diagrama de Clases del Dominio
 
-*(Adjunta aquí el diagrama de clases)*
+![Captura](docs/uml/DiagramaClases.jpg)
 
 **Resumen del diseño de dominio:**
 
@@ -992,7 +992,7 @@ La arquitectura de dominio se centra en las entidades de matching y afinidad.
 
 ### 🗄️ Diagrama de Despliegue
 
-*(Adjunta aquí el diagrama de despliegue)*
+![Captura](docs/uml/DiagramaDespliegue.png)
 
 ---
 
