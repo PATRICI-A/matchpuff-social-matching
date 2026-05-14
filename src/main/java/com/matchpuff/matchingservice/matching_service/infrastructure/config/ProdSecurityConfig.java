@@ -26,7 +26,8 @@ public class ProdSecurityConfig {
                     "/actuator/health",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/v3/api-docs/**"
+                    "/v3/api-docs/**",
+                    "/api/v1/categories/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             );

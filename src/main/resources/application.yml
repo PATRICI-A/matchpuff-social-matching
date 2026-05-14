@@ -16,3 +16,10 @@ management:
     web:
       exposure:
         include: health
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000
