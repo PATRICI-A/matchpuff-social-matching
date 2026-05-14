@@ -8,9 +8,9 @@ import java.util.UUID;
 @Data
 public class MatchRequest {
 
-    @NotNull(message = "El ID del solicitante es requerido")
+    @NotNull(message = "The requester ID is required")
     private UUID requesterId;
 
-    @NotNull(message = "El ID del destinatario es requerido")
+    @NotNull(message = "The target ID is required")
     private UUID targetId;
 }

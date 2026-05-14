@@ -1,20 +1,25 @@
 package com.matchpuff.matchingservice.matching_service.domain.model;
 
+import java.util.UUID;
+
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
+
 import lombok.Data;
 
 @Data
 public class Tag {
+
+    private UUID id;
     private String name;
-    private String category;
+    private UUID categoryID;
 
-    public Tag(String name, String category) {
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("The tag name cannot be blank");
-        if (category == null || category.isBlank()) throw new IllegalArgumentException("The tag category cannot be blank");
-        if (name.trim().length() > 50) throw new IllegalArgumentException("The tag name must be between 1 and 50 characters");
-        if (category.trim().length() > 100) throw new IllegalArgumentException("The tag category must be between 1 and 100 characters");
+    public Tag(String name, UUID categoryID) {
+        if (name == null || name.isBlank()) throw new InvalidInputException("The tag name cannot be blank");
+        if (categoryID == null) throw new InvalidInputException("The tag category ID cannot be null");
+        if (name.trim().length() > 50) throw new InvalidInputException("The tag name must be between 1 and 50 characters");
 
-
-        this.name = name.trim();
-        this.category = category.trim();
+        this.name = name.trim().toLowerCase();
+        this.categoryID = categoryID;
     }
+
 }

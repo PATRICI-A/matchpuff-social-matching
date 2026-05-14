@@ -1,11 +1,16 @@
 package com.matchpuff.matchingservice.matching_service.application.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
+import java.util.UUID;
 
-@Data
-@Builder
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class TagResponse {
+
+    private UUID id;
     private String name;
-    private String category;
+    private UUID categoryId;
+
 }
