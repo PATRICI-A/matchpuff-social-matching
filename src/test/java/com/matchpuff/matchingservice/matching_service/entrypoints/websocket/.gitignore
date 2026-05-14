@@ -47,9 +47,9 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-# Permitir el package "out" de matchingservice
-!src/main/java/com/matchpuff/matchingservice/matching_service/domain/ports/out/
-!src/main/java/com/matchpuff/matchingservice/matching_service/domain/ports/out/ProfileServicePort.java
+# Allow the domain port package named "out" to be tracked by Git.
+!src/main/java/com/matchpuff/profileservice/domain/ports/out/
+!src/main/java/com/matchpuff/profileservice/domain/ports/out/UserRepositoryPort.java
 
 # Build results on 'Bin' directories
 **/[Bb]in/*
