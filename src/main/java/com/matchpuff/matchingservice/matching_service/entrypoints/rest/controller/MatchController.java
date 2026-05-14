@@ -72,6 +72,24 @@ public class MatchController {
         return ResponseEntity.ok(matches);
     }
 
+    @GetMapping("/user/{userId}/sent")
+    @Operation(summary = "Get match requests sent by a user",
+               description = "Returns all match requests where the user is the requester")
+    @ApiResponse(responseCode = "200", description = "List of sent match requests")
+    public ResponseEntity<List<MatchResponse>> getSentMatchesByUser(
+            @Parameter(description = "ID of the user") @PathVariable UUID userId) {
+        return ResponseEntity.ok(matchRestMapper.toResponseList(matchUseCase.findByRequesterId(userId)));
+    }
+
+    @GetMapping("/user/{userId}/received")
+    @Operation(summary = "Get match requests received by a user",
+               description = "Returns all match requests where the user is the target")
+    @ApiResponse(responseCode = "200", description = "List of received match requests")
+    public ResponseEntity<List<MatchResponse>> getReceivedMatchesByUser(
+            @Parameter(description = "ID of the user") @PathVariable UUID userId) {
+        return ResponseEntity.ok(matchRestMapper.toResponseList(matchUseCase.findByTargetId(userId)));
+    }
+
     // ---------------- UPDATE STATUS ----------------
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update match status",
