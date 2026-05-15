@@ -10,6 +10,7 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFound
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client.ProfileFeignClient;
+import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.FriendRequestDto;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
 
 import feign.FeignException;
@@ -40,6 +41,15 @@ public class ProfileServiceAdapter implements ProfileServicePort {
                     .toList();
         } catch (FeignException e) {
             throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void addFriend(UUID userId, UUID friendId) {
+        try {
+            profileFeignClient.addFriend(userId, new FriendRequestDto(friendId));
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable while adding friend: " + e.getMessage());
         }
     }
 

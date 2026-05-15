@@ -1,5 +1,6 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.ExternalServiceException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
@@ -7,19 +8,23 @@ import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchingServiceImpl implements MatchUseCasePort {
 
     private final MatchRepositoryPort matchRepository;
     private final RecommendationsUseCasePort recommendationsUseCase;
+    private final ProfileServicePort profileServicePort;
 
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
@@ -65,6 +70,16 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         }
         match.setStatus(accept ? MatchStatus.ACCEPTED : MatchStatus.REJECTED);
         match.setUpdatedAt(LocalDateTime.now());
+
+        if (accept) {
+            try {
+                profileServicePort.addFriend(match.getRequesterId(), match.getTargetId());
+            } catch (Exception e) {
+                log.warn("Could not add friends in profile service for match {}: {}", matchId, e.getMessage());
+                throw new ExternalServiceException("Cannot accept match right now, please try again later");
+            }
+        }
+
         return matchRepository.save(match);
     }
 }
