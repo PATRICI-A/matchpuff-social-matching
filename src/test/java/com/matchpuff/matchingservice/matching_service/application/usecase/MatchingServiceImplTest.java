@@ -1,11 +1,14 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.ExternalServiceException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +31,12 @@ class MatchingServiceImplTest {
 
     @Mock
     private MatchRepositoryPort matchRepository;
+
+    @Mock
+    private RecommendationsUseCasePort recommendationsUseCase;
+
+    @Mock
+    private ProfileServicePort profileServicePort;
 
     @InjectMocks
     private MatchingServiceImpl matchingService;
@@ -58,6 +67,7 @@ class MatchingServiceImplTest {
     @Test
     void createMatch_success() {
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(false);
+        when(recommendationsUseCase.calculateAffinityScore(requesterId, targetId)).thenReturn(pendingMatch.getAffinityScore());
         when(matchRepository.save(any(Match.class))).thenReturn(pendingMatch);
 
         Match result = matchingService.createMatch(requesterId, targetId);
@@ -126,14 +136,28 @@ class MatchingServiceImplTest {
     // ======================== RESPOND TO MATCH REQUEST ========================
 
     @Test
-    void respondToMatchRequest_accept_setsAccepted() {
+    void respondToMatchRequest_accept_setsAcceptedAndAddsFriend() {
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
         when(matchRepository.save(any(Match.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(profileServicePort).addFriend(any(UUID.class), any(UUID.class));
 
         Match result = matchingService.respondToMatchRequest(matchId, true);
 
         assertThat(result.getStatus()).isEqualTo(MatchStatus.ACCEPTED);
         assertThat(result.getUpdatedAt()).isNotNull();
+        verify(profileServicePort).addFriend(requesterId, targetId);
+    }
+
+    @Test
+    void respondToMatchRequest_accept_throwsWhenProfileServiceFails() {
+        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
+        doThrow(new RuntimeException("timeout")).when(profileServicePort).addFriend(any(UUID.class), any(UUID.class));
+
+        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, true))
+                .isInstanceOf(ExternalServiceException.class)
+                .hasMessageContaining("Cannot accept match right now");
+
+        verify(matchRepository, never()).save(any());
     }
 
     @Test

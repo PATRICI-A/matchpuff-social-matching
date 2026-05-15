@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface MatchPersistenceMapper {
-
+    
     MatchDocument toDocument(Match match);
 
     Match toDomain(MatchDocument document);

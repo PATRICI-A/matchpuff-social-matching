@@ -4,12 +4,13 @@ import com.matchpuff.matchingservice.matching_service.application.dto.request.Ma
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationWithScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.mapper.MatchApplicationMapper;
+import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
-import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,7 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -69,6 +72,24 @@ public class MatchController {
         return ResponseEntity.ok(matches);
     }
 
+    @GetMapping("/user/{userId}/sent")
+    @Operation(summary = "Get match requests sent by a user",
+               description = "Returns all match requests where the user is the requester")
+    @ApiResponse(responseCode = "200", description = "List of sent match requests")
+    public ResponseEntity<List<MatchResponse>> getSentMatchesByUser(
+            @Parameter(description = "ID of the user") @PathVariable UUID userId) {
+        return ResponseEntity.ok(matchRestMapper.toResponseList(matchUseCase.findByRequesterId(userId)));
+    }
+
+    @GetMapping("/user/{userId}/received")
+    @Operation(summary = "Get match requests received by a user",
+               description = "Returns all match requests where the user is the target")
+    @ApiResponse(responseCode = "200", description = "List of received match requests")
+    public ResponseEntity<List<MatchResponse>> getReceivedMatchesByUser(
+            @Parameter(description = "ID of the user") @PathVariable UUID userId) {
+        return ResponseEntity.ok(matchRestMapper.toResponseList(matchUseCase.findByTargetId(userId)));
+    }
+
     // ---------------- UPDATE STATUS ----------------
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update match status",
@@ -90,9 +111,25 @@ public class MatchController {
         return ResponseEntity.ok(matchRestMapper.toRecommendationResponse(userId, recommendationsUseCase.getRecommendedUserIdsForUser(userId)));
     }
 
-    @GetMapping("/recommendations/{userId}/profiles")
-    @Operation(summary = "Get recommended profiles for a user", description = "Returns profiles ordered by affinity score")
-    public ResponseEntity<List<MatchProfile>> getRecommendedProfiles(@PathVariable UUID userId) {
-        return ResponseEntity.ok(recommendationsUseCase.getRecommendedProfilesForUser(userId));
+    @GetMapping("/recommendations/{userId}/scores")
+    @Operation(
+        summary = "Get recommendations with affinity scores",
+        description = "Returns all recommended users sorted by total affinity score (descending), including the score breakdown per dimension"
+    )
+    @ApiResponse(responseCode = "200", description = "List of recommendations with affinity scores")
+    public ResponseEntity<List<RecommendationWithScoreResponse>> getRecommendationsWithScores(@PathVariable UUID userId) {
+        Map<UUID, AffinityScore> scores = recommendationsUseCase.getRecommendationsForUser(userId);
+        List<RecommendationWithScoreResponse> response = scores.entrySet().stream()
+                .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
+                        Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
+                .map(e -> RecommendationWithScoreResponse.builder()
+                        .targetUserId(e.getKey())
+                        .totalScore(e.getValue().getTotalScore())
+                        .interestScore(e.getValue().getInterestScore())
+                        .academicScore(e.getValue().getAcademicScore())
+                        .scheduleScore(e.getValue().getScheduleScore())
+                        .build())
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }

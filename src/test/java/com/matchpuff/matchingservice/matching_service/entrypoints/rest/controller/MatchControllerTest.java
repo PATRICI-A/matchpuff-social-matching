@@ -12,7 +12,6 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidI
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
-import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
@@ -29,6 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -269,15 +269,19 @@ class MatchControllerTest {
     }
 
     @Test
-    void getRecommendedProfiles_returns200() throws Exception {
-        MatchProfile profile = new MatchProfile();
-        profile.setId(targetId);
-        profile.setCareer("Engineering");
+    void getRecommendationsWithScores_returns200() throws Exception {
+        AffinityScore score = new AffinityScore();
+        score.setTotalScore(0.85);
+        score.setInterestScore(0.9);
+        score.setAcademicScore(0.8);
+        score.setScheduleScore(0.75);
 
-        when(recommendationsUseCase.getRecommendedProfilesForUser(requesterId)).thenReturn(List.of(profile));
+        when(recommendationsUseCase.getRecommendationsForUser(requesterId))
+                .thenReturn(Map.of(targetId, score));
 
-        mockMvc.perform(get("/api/v1/matches/recommendations/{userId}/profiles", requesterId))
+        mockMvc.perform(get("/api/v1/matches/recommendations/{userId}/scores", requesterId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(targetId.toString()));
+                .andExpect(jsonPath("$[0].targetUserId").value(targetId.toString()))
+                .andExpect(jsonPath("$[0].totalScore").value(0.85));
     }
 }
