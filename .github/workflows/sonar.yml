@@ -1,4 +1,4 @@
-name: QA – Sonar Analysis
+name: Sonar Analysis
 
 on:
   pull_request:
