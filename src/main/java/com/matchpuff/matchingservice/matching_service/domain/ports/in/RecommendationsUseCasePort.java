@@ -6,11 +6,13 @@ import java.util.UUID;
 
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
+import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
 
 public interface RecommendationsUseCasePort {
 
     Map<UUID, AffinityScore> getRecommendationsForUser(UUID userId);
     List<MatchProfile> getRecommendedProfilesForUser(UUID userId);
     List<UUID> getRecommendedUserIdsForUser(UUID userId);
+    List<NearbyRecommendation> getNearbyRecommendationsForUser(UUID userId);
     AffinityScore calculateAffinityScore(UUID userId1, UUID userId2);
 }

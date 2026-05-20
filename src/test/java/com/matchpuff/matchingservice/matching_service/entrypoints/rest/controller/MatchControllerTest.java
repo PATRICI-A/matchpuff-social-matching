@@ -6,13 +6,16 @@ import com.matchpuff.matchingservice.matching_service.application.dto.request.Ma
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.AffinityScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.NearbyRecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationWithScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.mapper.MatchApplicationMapper;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidInputException;
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
+import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.entrypoints.advice.GlobalExceptionHandler;
@@ -276,12 +279,49 @@ class MatchControllerTest {
         score.setAcademicScore(0.8);
         score.setScheduleScore(0.75);
 
-        when(recommendationsUseCase.getRecommendationsForUser(requesterId))
-                .thenReturn(Map.of(targetId, score));
+        RecommendationWithScoreResponse scoreResponse = RecommendationWithScoreResponse.builder()
+                .targetUserId(targetId)
+                .totalScore(0.85)
+                .interestScore(0.9)
+                .academicScore(0.8)
+                .scheduleScore(0.75)
+                .build();
+
+        when(recommendationsUseCase.getRecommendationsForUser(requesterId)).thenReturn(Map.of(targetId, score));
+        when(matchRestMapper.toRecommendationWithScoreResponse(targetId, score)).thenReturn(scoreResponse);
 
         mockMvc.perform(get("/api/v1/matches/recommendations/{userId}/scores", requesterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].targetUserId").value(targetId.toString()))
                 .andExpect(jsonPath("$[0].totalScore").value(0.85));
+    }
+
+    @Test
+    void getNearbyRecommendations_returns200() throws Exception {
+        AffinityScore score = new AffinityScore();
+        score.setTotalScore(0.92);
+        score.setInterestScore(0.9);
+        score.setAcademicScore(0.85);
+        score.setScheduleScore(0.8);
+
+        NearbyRecommendation nearbyRecommendation = new NearbyRecommendation(targetId, 150.0, score);
+
+        NearbyRecommendationResponse nearbyResponse = NearbyRecommendationResponse.builder()
+                .targetUserId(targetId)
+                .distanceMeters(150.0)
+                .totalScore(0.92)
+                .interestScore(0.9)
+                .academicScore(0.85)
+                .scheduleScore(0.8)
+                .build();
+
+        when(recommendationsUseCase.getNearbyRecommendationsForUser(requesterId)).thenReturn(List.of(nearbyRecommendation));
+        when(matchRestMapper.toNearbyRecommendationResponse(nearbyRecommendation)).thenReturn(nearbyResponse);
+
+        mockMvc.perform(get("/api/v1/matches/recommendations/{userId}/nearby", requesterId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].targetUserId").value(targetId.toString()))
+                .andExpect(jsonPath("$[0].distanceMeters").value(150.0))
+                .andExpect(jsonPath("$[0].totalScore").value(0.92));
     }
 }
