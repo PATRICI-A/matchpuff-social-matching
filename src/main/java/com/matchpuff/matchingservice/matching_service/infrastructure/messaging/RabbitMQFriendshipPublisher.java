@@ -28,7 +28,7 @@ public class RabbitMQFriendshipPublisher implements MatchEventPublisherPort{
                 .affinityPercentage(affinityPercentage)
                 .createdAt(java.time.LocalDateTime.now())
                 .build();
-        rabbitTemplate.convertAndSend("match.exchange","match.received", event);
+        rabbitTemplate.convertAndSend("matching.exchange","match.received", event);
     }
 
     @Override
@@ -39,6 +39,6 @@ public class RabbitMQFriendshipPublisher implements MatchEventPublisherPort{
                 .status(status)
                 .respondedAt(java.time.LocalDateTime.now())
                 .build();
-        rabbitTemplate.convertAndSend("match.exchange","match.response", event);
+        rabbitTemplate.convertAndSend("matching.exchange","match.response", event);
     }
 }
