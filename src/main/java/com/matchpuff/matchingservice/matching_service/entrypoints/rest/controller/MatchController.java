@@ -3,6 +3,7 @@ package com.matchpuff.matchingservice.matching_service.entrypoints.rest.controll
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.NearbyRecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationWithScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.mapper.MatchApplicationMapper;
@@ -111,6 +112,19 @@ public class MatchController {
         return ResponseEntity.ok(matchRestMapper.toRecommendationResponse(userId, recommendationsUseCase.getRecommendedUserIdsForUser(userId)));
     }
 
+    @GetMapping("/recommendations/{userId}/nearby")
+    @Operation(
+        summary = "Get nearby recommendations",
+        description = "Returns recommended users constrained by geolocation, including their distance from the requester"
+    )
+    @ApiResponse(responseCode = "200", description = "List of nearby recommendations")
+    public ResponseEntity<List<NearbyRecommendationResponse>> getNearbyRecommendations(@PathVariable UUID userId) {
+        List<NearbyRecommendationResponse> response = recommendationsUseCase.getNearbyRecommendationsForUser(userId).stream()
+                .map(matchRestMapper::toNearbyRecommendationResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/recommendations/{userId}/scores")
     @Operation(
         summary = "Get recommendations with affinity scores",
@@ -122,13 +136,7 @@ public class MatchController {
         List<RecommendationWithScoreResponse> response = scores.entrySet().stream()
                 .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
                         Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
-                .map(e -> RecommendationWithScoreResponse.builder()
-                        .targetUserId(e.getKey())
-                        .totalScore(e.getValue().getTotalScore())
-                        .interestScore(e.getValue().getInterestScore())
-                        .academicScore(e.getValue().getAcademicScore())
-                        .scheduleScore(e.getValue().getScheduleScore())
-                        .build())
+                .map(e -> matchRestMapper.toRecommendationWithScoreResponse(e.getKey(), e.getValue()))
                 .toList();
         return ResponseEntity.ok(response);
     }

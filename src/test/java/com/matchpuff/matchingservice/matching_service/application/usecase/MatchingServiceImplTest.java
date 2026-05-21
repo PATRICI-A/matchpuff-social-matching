@@ -7,6 +7,7 @@ import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchEventPublisherPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,9 @@ class MatchingServiceImplTest {
 
     @Mock
     private ProfileServicePort profileServicePort;
+
+    @Mock
+    private MatchEventPublisherPort matchEventPublisher;
 
     @InjectMocks
     private MatchingServiceImpl matchingService;
@@ -81,6 +85,8 @@ class MatchingServiceImplTest {
         assertThat(saved.getRequesterId()).isEqualTo(requesterId);
         assertThat(saved.getTargetId()).isEqualTo(targetId);
         assertThat(saved.getIdMatch()).isNotNull();
+
+        verify(matchEventPublisher).publishMatchReceived(requesterId, targetId, pendingMatch.getAffinityScore().getTotalScore());
     }
 
     @Test
@@ -146,6 +152,7 @@ class MatchingServiceImplTest {
         assertThat(result.getStatus()).isEqualTo(MatchStatus.ACCEPTED);
         assertThat(result.getUpdatedAt()).isNotNull();
         verify(profileServicePort).addFriend(requesterId, targetId);
+        verify(matchEventPublisher).publishMatchResponse(requesterId, targetId, MatchStatus.ACCEPTED);
     }
 
     @Test
@@ -168,6 +175,7 @@ class MatchingServiceImplTest {
         Match result = matchingService.respondToMatchRequest(matchId, false);
 
         assertThat(result.getStatus()).isEqualTo(MatchStatus.REJECTED);
+        verify(matchEventPublisher).publishMatchResponse(requesterId, targetId, MatchStatus.REJECTED);
     }
 
     @Test
