@@ -7,6 +7,7 @@ import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchEventPublisherPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     private final MatchRepositoryPort matchRepository;
     private final RecommendationsUseCasePort recommendationsUseCase;
     private final ProfileServicePort profileServicePort;
+    private final MatchEventPublisherPort matchEventPublisher;
 
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
@@ -42,7 +44,9 @@ public class MatchingServiceImpl implements MatchUseCasePort {
 
         match.setAffinityScore(recommendationsUseCase.calculateAffinityScore(requesterId, targetId));
 
-        return matchRepository.save(match);
+        Match saved = matchRepository.save(match);
+        matchEventPublisher.publishMatchReceived(requesterId, targetId, saved.getAffinityScore().getTotalScore());
+        return saved;
     }
 
     @Override
@@ -80,6 +84,8 @@ public class MatchingServiceImpl implements MatchUseCasePort {
             }
         }
 
-        return matchRepository.save(match);
+        Match saved = matchRepository.save(match);
+        matchEventPublisher.publishMatchResponse(match.getRequesterId(), match.getTargetId(), saved.getStatus());
+        return saved;
     }
 }
