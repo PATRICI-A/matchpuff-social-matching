@@ -3,7 +3,7 @@ package com.matchpuff.matchingservice.matching_service.infrastructure.external.p
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -17,6 +17,6 @@ import com.matchpuff.matchingservice.matching_service.infrastructure.external.pr
 )
 public interface ProfilePublicFeignClient {
 
-    @PatchMapping("/users/{userId}/friends")
+    @PostMapping("/users/{userId}/friends")
     void addFriend(@PathVariable UUID userId, @RequestBody FriendRequestDto request);
 }
