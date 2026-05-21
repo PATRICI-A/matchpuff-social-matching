@@ -6,6 +6,21 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGODB_DATABASE}
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    ssl:
+      enabled: ${RABBITMQ_SSL_ENABLED:false}
+
+rabbitmq:
+  exchange:
+    matching: matching.exchange
+  routing-key:
+    match-received: match.received
+    match-response: match.response
 
 profile-service:
   url: ${PROFILE_SERVICE_URL}
