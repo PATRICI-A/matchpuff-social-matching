@@ -5,7 +5,10 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-@EnableFeignClients(basePackages = "com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client")
+@EnableFeignClients(basePackages = {
+	"com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client",
+	"com.matchpuff.matchingservice.matching_service.infrastructure.external.geolocation.client"
+})
 public class FeignConfig {
 
 }
