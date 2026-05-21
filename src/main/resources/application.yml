@@ -25,6 +25,7 @@ rabbitmq:
 profile-service:
   url: ${PROFILE_SERVICE_URL}
   path: ${PROFILE_SERVICE_PATH}
+  public-path: ${PROFILE_SERVICE_PUBLIC_PATH}
 
 geolocation-service:
   url: ${GEOLOCATION_SERVICE_URL}
