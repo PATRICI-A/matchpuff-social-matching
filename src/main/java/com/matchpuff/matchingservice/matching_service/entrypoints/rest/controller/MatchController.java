@@ -93,16 +93,31 @@ public class MatchController {
 
     // ---------------- UPDATE STATUS ----------------
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Update match status",
-               description = "Changes the status of the match to ACCEPTED or REJECTED")
+    @Operation(summary = "Accept or reject a match request",
+               description = "Only the recipient of the match request can accept or reject it")
     @ApiResponse(responseCode = "200", description = "Status updated")
     @ApiResponse(responseCode = "404", description = "Match not found")
-    @ApiResponse(responseCode = "400", description = "Invalid status")
+    @ApiResponse(responseCode = "400", description = "Invalid status or user is not the recipient")
     public ResponseEntity<MatchResponse> updateMatchStatus(
             @Parameter(description = "ID of the match") @PathVariable UUID id,
+            @Parameter(description = "ID of the user responding") @RequestParam UUID userId,
             @Valid @RequestBody MatchUpdateRequest request) {
         boolean accept = request.getStatus() == MatchStatus.ACCEPTED;
-        return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, accept)));
+        return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, userId, accept)));
+    }
+
+    // ---------------- CANCEL MATCH ----------------
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Cancel a match request",
+               description = "Only the sender of the match request can cancel it while it is still pending")
+    @ApiResponse(responseCode = "204", description = "Match request cancelled successfully")
+    @ApiResponse(responseCode = "404", description = "Match not found")
+    @ApiResponse(responseCode = "400", description = "User is not the sender or match is not pending")
+    public ResponseEntity<Void> cancelMatch(
+            @Parameter(description = "ID of the match") @PathVariable UUID id,
+            @Parameter(description = "ID of the user cancelling") @RequestParam UUID userId) {
+        matchUseCase.cancelMatch(id, userId);
+        return ResponseEntity.noContent().build();
     }
 
     // ---------------- GET RECOMMENDATIONS ----------------

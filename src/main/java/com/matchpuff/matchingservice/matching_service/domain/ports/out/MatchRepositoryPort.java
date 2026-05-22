@@ -12,5 +12,5 @@ public interface MatchRepositoryPort {
     List<Match> findByTargetId(UUID targetId);
     List<Match> findByRequesterId(UUID requesterId);
     boolean existsByRequesterIdAndTargetId(UUID requesterId, UUID targetId);
-
+    void delete(UUID matchId);
 }

@@ -56,7 +56,6 @@ class RecommendationsUseCaseImplTest {
 
         otherProfile2 = new MatchProfile();
         otherProfile2.setId(otherId2);
-
     }
 
     private AffinityScore scoreWith(double total) {
@@ -68,7 +67,8 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_excludesSelf() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1));
+        // getAllProfiles(userId) already excludes the requester
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1));
         when(affinityCalculator.calculate(any(), any())).thenReturn(scoreWith(0.8));
 
         Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
@@ -80,7 +80,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_returnsMapWithAffinityScores() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         AffinityScore score1 = scoreWith(0.7);
         AffinityScore score2 = scoreWith(0.5);
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(score1);
@@ -96,7 +96,8 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendedProfilesForUser_sortedByAffinityDescending() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        // called twice: once by getRecommendationsForUser, once by getAllOtherProfiles inside getRecommendedProfilesForUser
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.3));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.9));
 
@@ -110,7 +111,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendedUserIdsForUser_returnsOrderedIds() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.2));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.8));
 
@@ -138,7 +139,8 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_onlyUser_returnsEmptyMap() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile));
+        // profile service excludes the requester, so returns empty list
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of());
 
         Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
 
@@ -148,7 +150,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_returnsAllOtherProfiles() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.7));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.5));
 
@@ -160,7 +162,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getNearbyRecommendationsForUser_returnsNearbyProfilesWithDistance() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(geolocationServicePort.getNearbyUsers(userId)).thenReturn(List.of(
                 new NearbyUserDistance(otherId1, 120.0),
                 new NearbyUserDistance(otherId2, 45.0)

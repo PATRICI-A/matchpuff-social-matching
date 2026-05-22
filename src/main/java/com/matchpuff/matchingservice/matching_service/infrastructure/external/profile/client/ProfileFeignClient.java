@@ -22,4 +22,7 @@ public interface ProfileFeignClient {
 
     @GetMapping("/matching/profiles")
     List<UserMatchProfileDto> getAllProfiles();
+
+    @GetMapping("/matching/profiles/candidates/{userId}")
+    List<UserMatchProfileDto> getAllProfiles(@PathVariable UUID userId);
 }

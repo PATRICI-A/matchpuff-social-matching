@@ -148,4 +148,15 @@ class MatchRepositoryAdapterTest {
 
         assertThat(result).isEmpty();
     }
+
+    // ======================== delete ========================
+
+    @Test
+    void delete_callsRepositoryDeleteById() {
+        doNothing().when(mongoRepository).deleteById(matchId);
+
+        adapter.delete(matchId);
+
+        verify(mongoRepository).deleteById(matchId);
+    }
 }
