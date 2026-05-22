@@ -16,6 +16,6 @@ import com.matchpuff.matchingservice.matching_service.infrastructure.external.ge
 )
 public interface GeolocationFeignClient {
 
-    @GetMapping("/users/{userId}/nearby")
+    @GetMapping("/nearby/by-user")
     List<NearbyUserDto> getNearbyUsers(@PathVariable UUID userId);
 }
