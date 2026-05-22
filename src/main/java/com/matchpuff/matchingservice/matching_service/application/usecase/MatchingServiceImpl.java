@@ -30,6 +30,15 @@ public class MatchingServiceImpl implements MatchUseCasePort {
 
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
+        if (requesterId.equals(targetId)) {
+            throw new InvalidInputException("Cannot send a match request to yourself");
+        }
+
+        List<UUID> friends = profileServicePort.getFriends(requesterId);
+        if (friends.contains(targetId)) {
+            throw new InvalidInputException("Cannot send a match request to someone who is already your friend");
+        }
+
         if (matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)) {
             throw new InvalidInputException("Already exists a match request between requester and target");
         }
@@ -66,9 +75,11 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     }
 
     @Override
-    public Match respondToMatchRequest(UUID matchId, boolean accept) {
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
+    public Match respondToMatchRequest(UUID matchId, UUID responderId, boolean accept) {
+        Match match = getMatch(matchId);
+        if (!match.getTargetId().equals(responderId)) {
+            throw new InvalidInputException("Only the recipient of a match request can accept or reject it");
+        }
         if (match.getStatus() != MatchStatus.PENDING) {
             throw new InvalidInputException("Only pending requests can be responded to");
         }
@@ -87,5 +98,17 @@ public class MatchingServiceImpl implements MatchUseCasePort {
         Match saved = matchRepository.save(match);
         matchEventPublisher.publishMatchResponse(match.getRequesterId(), match.getTargetId(), saved.getStatus());
         return saved;
+    }
+
+    @Override
+    public void cancelMatch(UUID matchId, UUID requesterId) {
+        Match match = getMatch(matchId);
+        if (!match.getRequesterId().equals(requesterId)) {
+            throw new InvalidInputException("Only the sender of a match request can cancel it");
+        }
+        if (match.getStatus() != MatchStatus.PENDING) {
+            throw new InvalidInputException("Only pending match requests can be cancelled");
+        }
+        matchRepository.delete(matchId);
     }
 }

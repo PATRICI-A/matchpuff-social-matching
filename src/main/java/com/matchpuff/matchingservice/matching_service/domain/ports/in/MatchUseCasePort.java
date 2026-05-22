@@ -11,6 +11,7 @@ public interface MatchUseCasePort {
     Match getMatch(UUID matchId);
     List<Match> findByRequesterId(UUID requesterId);
     List<Match> findByTargetId(UUID targetId);
-    Match respondToMatchRequest(UUID matchId, boolean accept);
+    Match respondToMatchRequest(UUID matchId, UUID responderId, boolean accept);
+    void cancelMatch(UUID matchId, UUID requesterId);
 
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
 
@@ -22,4 +23,7 @@ public interface ProfileFeignClient {
 
     @GetMapping("/matching/profiles")
     List<UserMatchProfileDto> getAllProfiles();
+
+    @GetMapping("/matching/profiles")
+    List<UserMatchProfileDto> getAllProfiles(@RequestParam UUID userId);
 }

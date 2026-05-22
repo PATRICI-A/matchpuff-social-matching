@@ -89,10 +89,6 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
     }
 
     private List<MatchProfile> getAllOtherProfiles(UUID userId) {
-        List<MatchProfile> allProfiles = profileServicePort.getAllProfiles();
-
-        return allProfiles.stream()
-                .filter(profile -> !profile.getId().equals(userId))
-                .toList();
+        return profileServicePort.getAllProfiles(userId);
     }
 }
