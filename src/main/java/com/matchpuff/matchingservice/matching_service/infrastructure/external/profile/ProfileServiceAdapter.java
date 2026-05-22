@@ -47,6 +47,26 @@ public class ProfileServiceAdapter implements ProfileServicePort {
     }
 
     @Override
+    public List<MatchProfile> getAllProfiles(UUID excludeUserId) {
+        try {
+            return profileFeignClient.getAllProfiles(excludeUserId).stream()
+                    .map(this::toMatchProfile)
+                    .toList();
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<UUID> getFriends(UUID userId) {
+        try {
+            return profilePublicFeignClient.getFriends(userId);
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void addFriend(UUID userId, UUID friendId) {
         try {
             profilePublicFeignClient.addFriend(userId, new FriendRequestDto(friendId));

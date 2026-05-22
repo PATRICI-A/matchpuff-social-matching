@@ -151,6 +151,21 @@ class MatchControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void createMatch_targetIsFriend_returns400() throws Exception {
+        MatchRequest request = new MatchRequest();
+        request.setRequesterId(requesterId);
+        request.setTargetId(targetId);
+
+        when(matchUseCase.createMatch(requesterId, targetId))
+                .thenThrow(new InvalidInputException("already your friend"));
+
+        mockMvc.perform(post("/api/v1/matches")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
     // ======================== GET MATCH ========================
 
     @Test
@@ -199,10 +214,11 @@ class MatchControllerTest {
                 .affinityScore(AffinityScoreResponse.builder().build())
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 
-        when(matchUseCase.respondToMatchRequest(matchId, true)).thenReturn(match);
+        when(matchUseCase.respondToMatchRequest(matchId, targetId, true)).thenReturn(match);
         when(matchRestMapper.toResponse(match)).thenReturn(acceptedResponse);
 
         mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
+                        .param("userId", targetId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -219,10 +235,11 @@ class MatchControllerTest {
                 .affinityScore(AffinityScoreResponse.builder().build())
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 
-        when(matchUseCase.respondToMatchRequest(matchId, false)).thenReturn(match);
+        when(matchUseCase.respondToMatchRequest(matchId, targetId, false)).thenReturn(match);
         when(matchRestMapper.toResponse(match)).thenReturn(rejectedResponse);
 
         mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
+                        .param("userId", targetId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -235,6 +252,18 @@ class MatchControllerTest {
         request.setStatus(null);
 
         mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
+                        .param("userId", targetId.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateMatchStatus_missingUserId_returns400() throws Exception {
+        MatchUpdateRequest request = new MatchUpdateRequest();
+        request.setStatus(MatchStatus.ACCEPTED);
+
+        mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -245,13 +274,68 @@ class MatchControllerTest {
         MatchUpdateRequest request = new MatchUpdateRequest();
         request.setStatus(MatchStatus.ACCEPTED);
 
-        when(matchUseCase.respondToMatchRequest(matchId, true))
+        when(matchUseCase.respondToMatchRequest(matchId, targetId, true))
                 .thenThrow(new NotFoundException("Match not found"));
 
         mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
+                        .param("userId", targetId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateMatchStatus_wrongResponder_returns400() throws Exception {
+        MatchUpdateRequest request = new MatchUpdateRequest();
+        request.setStatus(MatchStatus.ACCEPTED);
+        UUID wrongUser = UUID.randomUUID();
+
+        when(matchUseCase.respondToMatchRequest(matchId, wrongUser, true))
+                .thenThrow(new InvalidInputException("Only the recipient"));
+
+        mockMvc.perform(patch("/api/v1/matches/{id}/status", matchId)
+                        .param("userId", wrongUser.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ======================== CANCEL MATCH ========================
+
+    @Test
+    void cancelMatch_success_returns204() throws Exception {
+        doNothing().when(matchUseCase).cancelMatch(matchId, requesterId);
+
+        mockMvc.perform(delete("/api/v1/matches/{id}", matchId)
+                        .param("userId", requesterId.toString()))
+                .andExpect(status().isNoContent());
+
+        verify(matchUseCase).cancelMatch(matchId, requesterId);
+    }
+
+    @Test
+    void cancelMatch_notFound_returns404() throws Exception {
+        doThrow(new NotFoundException("Match not found")).when(matchUseCase).cancelMatch(matchId, requesterId);
+
+        mockMvc.perform(delete("/api/v1/matches/{id}", matchId)
+                        .param("userId", requesterId.toString()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cancelMatch_wrongUser_returns400() throws Exception {
+        UUID wrongUser = UUID.randomUUID();
+        doThrow(new InvalidInputException("Only the sender")).when(matchUseCase).cancelMatch(matchId, wrongUser);
+
+        mockMvc.perform(delete("/api/v1/matches/{id}", matchId)
+                        .param("userId", wrongUser.toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void cancelMatch_missingUserId_returns400() throws Exception {
+        mockMvc.perform(delete("/api/v1/matches/{id}", matchId))
+                .andExpect(status().isBadRequest());
     }
 
     // ======================== RECOMMENDATIONS ========================
