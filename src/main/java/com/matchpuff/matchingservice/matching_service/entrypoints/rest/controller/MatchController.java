@@ -1,5 +1,6 @@
 package com.matchpuff.matchingservice.matching_service.entrypoints.rest.controller;
 
+import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteriaRequest; 
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
@@ -231,5 +232,18 @@ public class MatchController {
                 .map(e -> matchRestMapper.toRecommendationWithScoreResponse(e.getKey(), e.getValue()))
                 .toList();
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/recommendations/{userId}/filtered")
+    @Operation(
+        summary = "Get filtered recommendations",
+        description = "Returns recommended user IDs filtered by career, semester, tag, active status and/or geolocation proximity"
+    )
+    @ApiResponse(responseCode = "200", description = "List of filtered recommended user IDs")
+    public ResponseEntity<RecommendationResponse> getFilteredRecommendations(
+            @PathVariable UUID userId,
+            @RequestBody FilterCriteriaRequest filters) {
+        List<UUID> ids = recommendationsUseCase.getFilteredRecommendations(userId, filters);
+        return ResponseEntity.ok(matchRestMapper.toRecommendationResponse(userId, ids));
     }
 }

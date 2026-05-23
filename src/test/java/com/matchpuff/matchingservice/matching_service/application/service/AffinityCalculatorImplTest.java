@@ -23,7 +23,7 @@ class AffinityCalculatorImplTest {
 
     private MatchProfile buildProfile(UUID id, String career, Integer semester,
                                       List<String> tags, List<String> schedules) {
-        return new MatchProfile(id, career, semester, tags, schedules);
+        return new MatchProfile(id, career, semester, tags, schedules, true);
     }
 
     @Test
