@@ -92,17 +92,26 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
 
     @Override
     public List<UUID> getFilteredRecommendations(UUID userId, FilterCriteriaRequest filters) {
-        List<MatchProfile> ranked = getRecommendedProfilesForUser(userId);
+        List<MatchProfile> candidates;
+        if (filters.isGeolocation()) {
+            Set<UUID> nearbyIds = getNearbyRecommendationsForUser(userId).stream()
+                    .map(NearbyRecommendation::getUserId)
+                    .collect(Collectors.toSet());
+            candidates = getAllOtherProfiles(userId).stream()
+                    .filter(p -> nearbyIds.contains(p.getId()))
+                    .toList();
+        } else {
+            candidates = getRecommendedProfilesForUser(userId);
+        }
 
-        return ranked.stream()
-                .filter(p -> filters.getCareers() == null
-                        || filters.getCareers() == CareersEnum.ALL
+        return candidates.stream()
+                .filter(p -> !filters.isActive() || p.isActive())
+                .filter(p -> filters.getCareers() == null || filters.getCareers() == CareersEnum.ALL
                         || filters.getCareers().name().equalsIgnoreCase(p.getCareer()))
-                .filter(p -> filters.getSemesters() == null
-                        || filters.getSemesters() == SemesterEnum.ALL
+                .filter(p -> filters.getSemesters() == null || filters.getSemesters() == SemesterEnum.ALL
                         || filters.getSemesters().ordinal() + 1 == p.getSemester())
                 .filter(p -> filters.getTag() == null
-                        || p.getTags().contains(filters.getTag()))
+                        || (p.getTags() != null && p.getTags().contains(filters.getTag())))
                 .map(MatchProfile::getId)
                 .toList();
     }
