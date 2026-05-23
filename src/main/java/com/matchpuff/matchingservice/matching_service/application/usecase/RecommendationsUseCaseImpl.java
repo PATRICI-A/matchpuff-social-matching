@@ -1,14 +1,12 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+
+import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteriaRequest;
+import com.matchpuff.matchingservice.matching_service.domain.model.enums.CareersEnum;
+import com.matchpuff.matchingservice.matching_service.domain.model.enums.SemesterEnum;
 import org.springframework.stereotype.Service;
 
 import com.matchpuff.matchingservice.matching_service.application.service.AffinityCalculator;
@@ -90,5 +88,22 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
 
     private List<MatchProfile> getAllOtherProfiles(UUID userId) {
         return profileServicePort.getAllProfiles(userId);
+    }
+
+    @Override
+    public List<UUID> getFilteredRecommendations(UUID userId, FilterCriteriaRequest filters) {
+        List<MatchProfile> ranked = getRecommendedProfilesForUser(userId);
+
+        return ranked.stream()
+                .filter(p -> filters.getCareers() == null
+                        || filters.getCareers() == CareersEnum.ALL
+                        || filters.getCareers().name().equalsIgnoreCase(p.getCareer()))
+                .filter(p -> filters.getSemesters() == null
+                        || filters.getSemesters() == SemesterEnum.ALL
+                        || filters.getSemesters().ordinal() + 1 == p.getSemester())
+                .filter(p -> filters.getTag() == null
+                        || p.getTags().contains(filters.getTag()))
+                .map(MatchProfile::getId)
+                .toList();
     }
 }

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteria;
+import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteriaRequest;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
@@ -16,5 +17,5 @@ public interface RecommendationsUseCasePort {
     List<UUID> getRecommendedUserIdsForUser(UUID userId);
     List<NearbyRecommendation> getNearbyRecommendationsForUser(UUID userId);
     AffinityScore calculateAffinityScore(UUID userId1, UUID userId2);
-    List<UUID> getFilteredRecommendations(UUID userId, FilterCriteria filters);
+    List<UUID> getFilteredRecommendations(UUID userId, FilterCriteriaRequest filters)
 }
