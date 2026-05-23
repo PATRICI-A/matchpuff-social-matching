@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 
 import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteriaRequest;
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.NoRecommendationsFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.enums.CareersEnum;
 import com.matchpuff.matchingservice.matching_service.domain.model.enums.SemesterEnum;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,20 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
             recommendations.put(target.getId(), affinityCalculator.calculate(requester, target));
         }
 
-        return recommendations;
+        Map<UUID, AffinityScore> result = recommendations.entrySet().stream()
+                .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
+                        Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
+                .limit(20)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
+
+        if (result.isEmpty()) {
+            throw new NoRecommendationsFoundException();
+        }
+        return result;
     }
 
     @Override
@@ -48,6 +62,7 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
                 .filter(profile -> scores.containsKey(profile.getId()))
                 .sorted(Comparator.comparingDouble((MatchProfile profile) ->
                         scores.get(profile.getId()).getTotalScore()).reversed())
+                .limit(20)
                 .toList();
     }
 
@@ -56,6 +71,7 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
         return getRecommendationsForUser(userId).entrySet().stream()
                 .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
                         Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
+                .limit(20)
                 .map(Map.Entry::getKey)
                 .toList();
     }
@@ -68,7 +84,7 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
             .collect(Collectors.toMap(NearbyUserDistance::getUserId, NearbyUserDistance::getDistanceMeters));
         Set<UUID> nearbyUserIds = new HashSet<>(distanceByUserId.keySet());
 
-        return getAllOtherProfiles(userId).stream()
+        List<NearbyRecommendation> result = getAllOtherProfiles(userId).stream()
             .filter(profile -> nearbyUserIds.contains(profile.getId()))
             .map(profile -> new NearbyRecommendation(
                 profile.getId(),
@@ -76,7 +92,13 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
                 affinityCalculator.calculate(requester, profile)))
             .sorted(Comparator.comparingDouble((NearbyRecommendation recommendation) ->
                 recommendation.getAffinityScore().getTotalScore()).reversed())
+            .limit(20)
             .toList();
+
+        if (result.isEmpty()) {
+            throw new NoRecommendationsFoundException();
+        }
+        return result;
         }
 
     @Override
@@ -104,7 +126,7 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
             candidates = getRecommendedProfilesForUser(userId);
         }
 
-        return candidates.stream()
+        List<UUID> result = candidates.stream()
                 .filter(p -> !filters.isActive() || p.isActive())
                 .filter(p -> filters.getCareers() == null || filters.getCareers() == CareersEnum.ALL
                         || filters.getCareers().name().equalsIgnoreCase(p.getCareer()))
@@ -113,6 +135,12 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
                 .filter(p -> filters.getTag() == null
                         || (p.getTags() != null && p.getTags().contains(filters.getTag())))
                 .map(MatchProfile::getId)
+                .limit(20)
                 .toList();
+
+        if (result.isEmpty()) {
+            throw new NoRecommendationsFoundException();
+        }
+        return result;
     }
 }
