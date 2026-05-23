@@ -34,6 +34,14 @@ public class MatchingServiceImpl implements MatchUseCasePort {
             throw new InvalidInputException("Cannot send a match request to yourself");
         }
 
+        var requesterProfile = profileServicePort.getProfileById(requesterId);
+        if (requesterProfile.getTags() == null || requesterProfile.getTags().isEmpty()) {
+            throw new InvalidInputException("You can't match without any tags!");
+        }
+        if (requesterProfile.getSchedulesAvailable() == null || requesterProfile.getSchedulesAvailable().isEmpty()) {
+            throw new InvalidInputException("You can't match without any available schedules!");
+        }
+
         List<UUID> friends = profileServicePort.getFriends(requesterId);
         if (friends.contains(targetId)) {
             throw new InvalidInputException("Cannot send a match request to someone who is already your friend");
