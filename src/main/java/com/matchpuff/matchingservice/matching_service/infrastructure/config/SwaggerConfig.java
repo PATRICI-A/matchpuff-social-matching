@@ -38,8 +38,8 @@ public class SwaggerConfig {
                         and geolocation.
 
                         **Authentication:** The API Gateway propagates the `X-User-Id` header \
-                        with the authenticated user's ID. All endpoints require a valid \
-                        **JWT Bearer token** in the `Authorization` header.
+                        with the authenticated user's ID. \
+                        
 
                         **Roles supported:** `STUDENT` · `ADMIN` · `ORGANIZER` — \
                         each role has its own set of allowed operations.
