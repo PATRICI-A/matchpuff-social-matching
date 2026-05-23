@@ -49,9 +49,9 @@ public class SwaggerConfig {
                         public API gateway.
                         """)
                         .contact(new Contact()
-                                .name("Contact Your Team — Universidad XYZ")
-                                .url("https://matchpuff.com")
-                                .email("dev@matchpuff.com"))
+                                .name("Contact Matchpuff — Escuela Colombiana de Ingeniera Julio Garavito")
+                                .email("javier.romero-d@mail.escuelaing.edu.co")
+                                .email("andres.cardozo-m@mail.escuelaing.edu.co"))
                 )
                 .tags(Arrays.asList(
                         new Tag().name("Matches - Management")
