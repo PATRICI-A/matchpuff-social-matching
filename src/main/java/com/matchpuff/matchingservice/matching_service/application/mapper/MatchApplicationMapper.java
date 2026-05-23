@@ -6,9 +6,12 @@ import com.matchpuff.matchingservice.matching_service.application.dto.request.Ma
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.AffinityScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.NearbyRecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationWithScoreResponse;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
+import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
 
 import java.util.List;
 import java.util.UUID;
@@ -59,4 +62,18 @@ public interface MatchApplicationMapper {
     List<MatchResponse> toResponseList(List<Match> matches);
 
     RecommendationResponse toRecommendationResponse(UUID userId, List<UUID> recommendedUserIds);
+
+    @Mapping(target = "targetUserId", source = "userId")
+    @Mapping(target = "totalScore", source = "affinityScore.totalScore")
+    @Mapping(target = "interestScore", source = "affinityScore.interestScore")
+    @Mapping(target = "academicScore", source = "affinityScore.academicScore")
+    @Mapping(target = "scheduleScore", source = "affinityScore.scheduleScore")
+    NearbyRecommendationResponse toNearbyRecommendationResponse(NearbyRecommendation recommendation);
+
+    @Mapping(target = "targetUserId", source = "targetUserId")
+    @Mapping(target = "totalScore", source = "affinityScore.totalScore")
+    @Mapping(target = "interestScore", source = "affinityScore.interestScore")
+    @Mapping(target = "academicScore", source = "affinityScore.academicScore")
+    @Mapping(target = "scheduleScore", source = "affinityScore.scheduleScore")
+    RecommendationWithScoreResponse toRecommendationWithScoreResponse(UUID targetUserId, AffinityScore affinityScore);
 }

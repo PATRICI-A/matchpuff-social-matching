@@ -3,6 +3,7 @@ package com.matchpuff.matchingservice.matching_service.entrypoints.rest.controll
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.request.MatchUpdateRequest;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.MatchResponse;
+import com.matchpuff.matchingservice.matching_service.application.dto.response.NearbyRecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationResponse;
 import com.matchpuff.matchingservice.matching_service.application.dto.response.RecommendationWithScoreResponse;
 import com.matchpuff.matchingservice.matching_service.application.mapper.MatchApplicationMapper;
@@ -92,16 +93,31 @@ public class MatchController {
 
     // ---------------- UPDATE STATUS ----------------
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Update match status",
-               description = "Changes the status of the match to ACCEPTED or REJECTED")
+    @Operation(summary = "Accept or reject a match request",
+               description = "Only the recipient of the match request can accept or reject it")
     @ApiResponse(responseCode = "200", description = "Status updated")
     @ApiResponse(responseCode = "404", description = "Match not found")
-    @ApiResponse(responseCode = "400", description = "Invalid status")
+    @ApiResponse(responseCode = "400", description = "Invalid status or user is not the recipient")
     public ResponseEntity<MatchResponse> updateMatchStatus(
             @Parameter(description = "ID of the match") @PathVariable UUID id,
+            @Parameter(description = "ID of the user responding") @RequestParam UUID userId,
             @Valid @RequestBody MatchUpdateRequest request) {
         boolean accept = request.getStatus() == MatchStatus.ACCEPTED;
-        return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, accept)));
+        return ResponseEntity.ok(matchRestMapper.toResponse(matchUseCase.respondToMatchRequest(id, userId, accept)));
+    }
+
+    // ---------------- CANCEL MATCH ----------------
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Cancel a match request",
+               description = "Only the sender of the match request can cancel it while it is still pending")
+    @ApiResponse(responseCode = "204", description = "Match request cancelled successfully")
+    @ApiResponse(responseCode = "404", description = "Match not found")
+    @ApiResponse(responseCode = "400", description = "User is not the sender or match is not pending")
+    public ResponseEntity<Void> cancelMatch(
+            @Parameter(description = "ID of the match") @PathVariable UUID id,
+            @Parameter(description = "ID of the user cancelling") @RequestParam UUID userId) {
+        matchUseCase.cancelMatch(id, userId);
+        return ResponseEntity.noContent().build();
     }
 
     // ---------------- GET RECOMMENDATIONS ----------------
@@ -109,6 +125,19 @@ public class MatchController {
     @Operation(summary = "Obtain recommendations for user", description = "Obtain a list of recommended user IDs based on affinity scores")
     public ResponseEntity<RecommendationResponse> getRecommendations(@PathVariable UUID userId) {
         return ResponseEntity.ok(matchRestMapper.toRecommendationResponse(userId, recommendationsUseCase.getRecommendedUserIdsForUser(userId)));
+    }
+
+    @GetMapping("/recommendations/{userId}/nearby")
+    @Operation(
+        summary = "Get nearby recommendations",
+        description = "Returns recommended users constrained by geolocation, including their distance from the requester"
+    )
+    @ApiResponse(responseCode = "200", description = "List of nearby recommendations")
+    public ResponseEntity<List<NearbyRecommendationResponse>> getNearbyRecommendations(@PathVariable UUID userId) {
+        List<NearbyRecommendationResponse> response = recommendationsUseCase.getNearbyRecommendationsForUser(userId).stream()
+                .map(matchRestMapper::toNearbyRecommendationResponse)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/recommendations/{userId}/scores")
@@ -122,13 +151,7 @@ public class MatchController {
         List<RecommendationWithScoreResponse> response = scores.entrySet().stream()
                 .sorted(Map.Entry.<UUID, AffinityScore>comparingByValue(
                         Comparator.comparingDouble(AffinityScore::getTotalScore)).reversed())
-                .map(e -> RecommendationWithScoreResponse.builder()
-                        .targetUserId(e.getKey())
-                        .totalScore(e.getValue().getTotalScore())
-                        .interestScore(e.getValue().getInterestScore())
-                        .academicScore(e.getValue().getAcademicScore())
-                        .scheduleScore(e.getValue().getScheduleScore())
-                        .build())
+                .map(e -> matchRestMapper.toRecommendationWithScoreResponse(e.getKey(), e.getValue()))
                 .toList();
         return ResponseEntity.ok(response);
     }

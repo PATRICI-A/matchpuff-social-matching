@@ -48,7 +48,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:qa-latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:qa-latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   deploy-qa:
     name: "Deploy to QA"

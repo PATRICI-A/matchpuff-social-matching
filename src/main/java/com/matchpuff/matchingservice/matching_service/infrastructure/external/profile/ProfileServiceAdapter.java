@@ -10,6 +10,7 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFound
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client.ProfileFeignClient;
+import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.client.ProfilePublicFeignClient;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.FriendRequestDto;
 import com.matchpuff.matchingservice.matching_service.infrastructure.external.profile.dto.UserMatchProfileDto;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class ProfileServiceAdapter implements ProfileServicePort {
 
     private final ProfileFeignClient profileFeignClient;
+    private final ProfilePublicFeignClient profilePublicFeignClient;
 
     @Override
     public MatchProfile getProfileById(UUID userId) {
@@ -45,9 +47,29 @@ public class ProfileServiceAdapter implements ProfileServicePort {
     }
 
     @Override
+    public List<MatchProfile> getAllProfiles(UUID excludeUserId) {
+        try {
+            return profileFeignClient.getAllProfiles(excludeUserId).stream()
+                    .map(this::toMatchProfile)
+                    .toList();
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<UUID> getFriends(UUID userId) {
+        try {
+            return profilePublicFeignClient.getFriends(userId);
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void addFriend(UUID userId, UUID friendId) {
         try {
-            profileFeignClient.addFriend(userId, new FriendRequestDto(friendId));
+            profilePublicFeignClient.addFriend(userId, new FriendRequestDto(friendId));
         } catch (FeignException e) {
             throw new ExternalServiceException("Profile service unavailable while adding friend: " + e.getMessage());
         }

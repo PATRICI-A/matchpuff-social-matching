@@ -7,6 +7,7 @@ import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchEventPublisherPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,9 @@ class MatchingServiceImplTest {
     @Mock
     private ProfileServicePort profileServicePort;
 
+    @Mock
+    private MatchEventPublisherPort matchEventPublisher;
+
     @InjectMocks
     private MatchingServiceImpl matchingService;
 
@@ -66,6 +70,7 @@ class MatchingServiceImplTest {
 
     @Test
     void createMatch_success() {
+        when(profileServicePort.getFriends(requesterId)).thenReturn(List.of());
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(false);
         when(recommendationsUseCase.calculateAffinityScore(requesterId, targetId)).thenReturn(pendingMatch.getAffinityScore());
         when(matchRepository.save(any(Match.class))).thenReturn(pendingMatch);
@@ -81,10 +86,29 @@ class MatchingServiceImplTest {
         assertThat(saved.getRequesterId()).isEqualTo(requesterId);
         assertThat(saved.getTargetId()).isEqualTo(targetId);
         assertThat(saved.getIdMatch()).isNotNull();
+
+        verify(matchEventPublisher).publishMatchReceived(requesterId, targetId, pendingMatch.getAffinityScore().getTotalScore());
+    }
+
+    @Test
+    void createMatch_sameUser_throwsInvalidInputException() {
+        assertThatThrownBy(() -> matchingService.createMatch(requesterId, requesterId))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("yourself");
+    }
+
+    @Test
+    void createMatch_targetIsFriend_throwsInvalidInputException() {
+        when(profileServicePort.getFriends(requesterId)).thenReturn(List.of(targetId));
+
+        assertThatThrownBy(() -> matchingService.createMatch(requesterId, targetId))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("already your friend");
     }
 
     @Test
     void createMatch_alreadyExists_throwsInvalidInputException() {
+        when(profileServicePort.getFriends(requesterId)).thenReturn(List.of());
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(true);
 
         assertThatThrownBy(() -> matchingService.createMatch(requesterId, targetId))
@@ -141,11 +165,12 @@ class MatchingServiceImplTest {
         when(matchRepository.save(any(Match.class))).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(profileServicePort).addFriend(any(UUID.class), any(UUID.class));
 
-        Match result = matchingService.respondToMatchRequest(matchId, true);
+        Match result = matchingService.respondToMatchRequest(matchId, targetId, true);
 
         assertThat(result.getStatus()).isEqualTo(MatchStatus.ACCEPTED);
         assertThat(result.getUpdatedAt()).isNotNull();
         verify(profileServicePort).addFriend(requesterId, targetId);
+        verify(matchEventPublisher).publishMatchResponse(requesterId, targetId, MatchStatus.ACCEPTED);
     }
 
     @Test
@@ -153,7 +178,7 @@ class MatchingServiceImplTest {
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
         doThrow(new RuntimeException("timeout")).when(profileServicePort).addFriend(any(UUID.class), any(UUID.class));
 
-        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, true))
+        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, targetId, true))
                 .isInstanceOf(ExternalServiceException.class)
                 .hasMessageContaining("Cannot accept match right now");
 
@@ -165,9 +190,20 @@ class MatchingServiceImplTest {
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
         when(matchRepository.save(any(Match.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Match result = matchingService.respondToMatchRequest(matchId, false);
+        Match result = matchingService.respondToMatchRequest(matchId, targetId, false);
 
         assertThat(result.getStatus()).isEqualTo(MatchStatus.REJECTED);
+        verify(matchEventPublisher).publishMatchResponse(requesterId, targetId, MatchStatus.REJECTED);
+    }
+
+    @Test
+    void respondToMatchRequest_wrongResponder_throwsInvalidInputException() {
+        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
+        UUID wrongUser = UUID.randomUUID();
+
+        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, wrongUser, true))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("Only the recipient");
     }
 
     @Test
@@ -175,7 +211,7 @@ class MatchingServiceImplTest {
         pendingMatch.setStatus(MatchStatus.ACCEPTED);
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
 
-        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, true))
+        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, targetId, true))
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessageContaining("Only pending requests can be responded to");
     }
@@ -184,7 +220,47 @@ class MatchingServiceImplTest {
     void respondToMatchRequest_notFound_throwsNotFoundException() {
         when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, true))
+        assertThatThrownBy(() -> matchingService.respondToMatchRequest(matchId, targetId, true))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    // ======================== CANCEL MATCH ========================
+
+    @Test
+    void cancelMatch_success() {
+        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
+        doNothing().when(matchRepository).delete(matchId);
+
+        matchingService.cancelMatch(matchId, requesterId);
+
+        verify(matchRepository).delete(matchId);
+    }
+
+    @Test
+    void cancelMatch_wrongRequester_throwsInvalidInputException() {
+        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
+        UUID wrongUser = UUID.randomUUID();
+
+        assertThatThrownBy(() -> matchingService.cancelMatch(matchId, wrongUser))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("Only the sender");
+    }
+
+    @Test
+    void cancelMatch_notPending_throwsInvalidInputException() {
+        pendingMatch.setStatus(MatchStatus.ACCEPTED);
+        when(matchRepository.findById(matchId)).thenReturn(Optional.of(pendingMatch));
+
+        assertThatThrownBy(() -> matchingService.cancelMatch(matchId, requesterId))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("Only pending match requests can be cancelled");
+    }
+
+    @Test
+    void cancelMatch_notFound_throwsNotFoundException() {
+        when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> matchingService.cancelMatch(matchId, requesterId))
                 .isInstanceOf(NotFoundException.class);
     }
 }

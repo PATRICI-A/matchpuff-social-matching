@@ -3,6 +3,9 @@ package com.matchpuff.matchingservice.matching_service.application.usecase;
 import com.matchpuff.matchingservice.matching_service.application.service.AffinityCalculator;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
+import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
+import com.matchpuff.matchingservice.matching_service.domain.model.NearbyUserDistance;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.GeolocationServicePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,9 @@ class RecommendationsUseCaseImplTest {
 
     @Mock
     private ProfileServicePort profileServicePort;
+
+    @Mock
+    private GeolocationServicePort geolocationServicePort;
 
     @Mock
     private AffinityCalculator affinityCalculator;
@@ -61,7 +67,8 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_excludesSelf() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1));
+        // getAllProfiles(userId) already excludes the requester
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1));
         when(affinityCalculator.calculate(any(), any())).thenReturn(scoreWith(0.8));
 
         Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
@@ -73,7 +80,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_returnsMapWithAffinityScores() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         AffinityScore score1 = scoreWith(0.7);
         AffinityScore score2 = scoreWith(0.5);
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(score1);
@@ -89,7 +96,8 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendedProfilesForUser_sortedByAffinityDescending() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        // called twice: once by getRecommendationsForUser, once by getAllOtherProfiles inside getRecommendedProfilesForUser
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.3));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.9));
 
@@ -103,7 +111,7 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendedUserIdsForUser_returnsOrderedIds() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile, otherProfile1, otherProfile2));
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
         when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.2));
         when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.8));
 
@@ -131,10 +139,43 @@ class RecommendationsUseCaseImplTest {
     @Test
     void getRecommendationsForUser_onlyUser_returnsEmptyMap() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
-        when(profileServicePort.getAllProfiles()).thenReturn(List.of(userProfile));
+        // profile service excludes the requester, so returns empty list
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of());
 
         Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getRecommendationsForUser_returnsAllOtherProfiles() {
+        when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
+        when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.7));
+        when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.5));
+
+        Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
+
+        assertThat(result).containsKeys(otherId1, otherId2).doesNotContainKey(userId);
+    }
+
+    @Test
+    void getNearbyRecommendationsForUser_returnsNearbyProfilesWithDistance() {
+        when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
+        when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of(otherProfile1, otherProfile2));
+        when(geolocationServicePort.getNearbyUsers(userId)).thenReturn(List.of(
+                new NearbyUserDistance(otherId1, 120.0),
+                new NearbyUserDistance(otherId2, 45.0)
+        ));
+        when(affinityCalculator.calculate(userProfile, otherProfile1)).thenReturn(scoreWith(0.4));
+        when(affinityCalculator.calculate(userProfile, otherProfile2)).thenReturn(scoreWith(0.9));
+
+        List<NearbyRecommendation> result = recommendationsUseCase.getNearbyRecommendationsForUser(userId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getUserId()).isEqualTo(otherId2);
+        assertThat(result.get(0).getDistanceMeters()).isEqualTo(45.0);
+        assertThat(result.get(1).getUserId()).isEqualTo(otherId1);
+        assertThat(result.get(1).getDistanceMeters()).isEqualTo(120.0);
     }
 }

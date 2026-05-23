@@ -7,6 +7,7 @@ import com.matchpuff.matchingservice.matching_service.domain.model.Match;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.MatchUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
+import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchEventPublisherPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchRepositoryPort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.ProfileServicePort;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +26,19 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     private final MatchRepositoryPort matchRepository;
     private final RecommendationsUseCasePort recommendationsUseCase;
     private final ProfileServicePort profileServicePort;
+    private final MatchEventPublisherPort matchEventPublisher;
 
     @Override
     public Match createMatch(UUID requesterId, UUID targetId) {
+        if (requesterId.equals(targetId)) {
+            throw new InvalidInputException("Cannot send a match request to yourself");
+        }
+
+        List<UUID> friends = profileServicePort.getFriends(requesterId);
+        if (friends.contains(targetId)) {
+            throw new InvalidInputException("Cannot send a match request to someone who is already your friend");
+        }
+
         if (matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)) {
             throw new InvalidInputException("Already exists a match request between requester and target");
         }
@@ -42,7 +53,9 @@ public class MatchingServiceImpl implements MatchUseCasePort {
 
         match.setAffinityScore(recommendationsUseCase.calculateAffinityScore(requesterId, targetId));
 
-        return matchRepository.save(match);
+        Match saved = matchRepository.save(match);
+        matchEventPublisher.publishMatchReceived(requesterId, targetId, saved.getAffinityScore().getTotalScore());
+        return saved;
     }
 
     @Override
@@ -62,9 +75,11 @@ public class MatchingServiceImpl implements MatchUseCasePort {
     }
 
     @Override
-    public Match respondToMatchRequest(UUID matchId, boolean accept) {
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new NotFoundException("Match not found with ID: " + matchId));
+    public Match respondToMatchRequest(UUID matchId, UUID responderId, boolean accept) {
+        Match match = getMatch(matchId);
+        if (!match.getTargetId().equals(responderId)) {
+            throw new InvalidInputException("Only the recipient of a match request can accept or reject it");
+        }
         if (match.getStatus() != MatchStatus.PENDING) {
             throw new InvalidInputException("Only pending requests can be responded to");
         }
@@ -80,6 +95,20 @@ public class MatchingServiceImpl implements MatchUseCasePort {
             }
         }
 
-        return matchRepository.save(match);
+        Match saved = matchRepository.save(match);
+        matchEventPublisher.publishMatchResponse(match.getRequesterId(), match.getTargetId(), saved.getStatus());
+        return saved;
+    }
+
+    @Override
+    public void cancelMatch(UUID matchId, UUID requesterId) {
+        Match match = getMatch(matchId);
+        if (!match.getRequesterId().equals(requesterId)) {
+            throw new InvalidInputException("Only the sender of a match request can cancel it");
+        }
+        if (match.getStatus() != MatchStatus.PENDING) {
+            throw new InvalidInputException("Only pending match requests can be cancelled");
+        }
+        matchRepository.delete(matchId);
     }
 }

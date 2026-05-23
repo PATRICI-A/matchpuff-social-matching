@@ -46,4 +46,9 @@ public class MatchRepositoryAdapter implements MatchRepositoryPort {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void delete(UUID matchId) {
+        mongoRepository.deleteById(matchId);
+    }
 }
