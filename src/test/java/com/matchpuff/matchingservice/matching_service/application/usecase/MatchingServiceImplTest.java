@@ -5,6 +5,7 @@ import com.matchpuff.matchingservice.matching_service.domain.exceptions.InvalidI
 import com.matchpuff.matchingservice.matching_service.domain.exceptions.NotFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.Match;
+import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchStatus;
 import com.matchpuff.matchingservice.matching_service.domain.ports.in.RecommendationsUseCasePort;
 import com.matchpuff.matchingservice.matching_service.domain.ports.out.MatchEventPublisherPort;
@@ -70,6 +71,8 @@ class MatchingServiceImplTest {
 
     @Test
     void createMatch_success() {
+        MatchProfile profile = new MatchProfile(requesterId, "Systems", 4, List.of("java"), List.of("monday-morning"), true);
+        when(profileServicePort.getProfileById(requesterId)).thenReturn(profile);
         when(profileServicePort.getFriends(requesterId)).thenReturn(List.of());
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(false);
         when(recommendationsUseCase.calculateAffinityScore(requesterId, targetId)).thenReturn(pendingMatch.getAffinityScore());
@@ -98,7 +101,29 @@ class MatchingServiceImplTest {
     }
 
     @Test
+    void createMatch_noTags_throwsInvalidInputException() {
+        MatchProfile profile = new MatchProfile(requesterId, "Systems", 4, List.of(), List.of("monday-morning"), true);
+        when(profileServicePort.getProfileById(requesterId)).thenReturn(profile);
+
+        assertThatThrownBy(() -> matchingService.createMatch(requesterId, targetId))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("tags");
+    }
+
+    @Test
+    void createMatch_noSchedules_throwsInvalidInputException() {
+        MatchProfile profile = new MatchProfile(requesterId, "Systems", 4, List.of("java"), List.of(), true);
+        when(profileServicePort.getProfileById(requesterId)).thenReturn(profile);
+
+        assertThatThrownBy(() -> matchingService.createMatch(requesterId, targetId))
+                .isInstanceOf(InvalidInputException.class)
+                .hasMessageContaining("schedules");
+    }
+
+    @Test
     void createMatch_targetIsFriend_throwsInvalidInputException() {
+        MatchProfile profile = new MatchProfile(requesterId, "Systems", 4, List.of("java"), List.of("monday-morning"), true);
+        when(profileServicePort.getProfileById(requesterId)).thenReturn(profile);
         when(profileServicePort.getFriends(requesterId)).thenReturn(List.of(targetId));
 
         assertThatThrownBy(() -> matchingService.createMatch(requesterId, targetId))
@@ -108,6 +133,8 @@ class MatchingServiceImplTest {
 
     @Test
     void createMatch_alreadyExists_throwsInvalidInputException() {
+        MatchProfile profile = new MatchProfile(requesterId, "Systems", 4, List.of("java"), List.of("monday-morning"), true);
+        when(profileServicePort.getProfileById(requesterId)).thenReturn(profile);
         when(profileServicePort.getFriends(requesterId)).thenReturn(List.of());
         when(matchRepository.existsByRequesterIdAndTargetId(requesterId, targetId)).thenReturn(true);
 
