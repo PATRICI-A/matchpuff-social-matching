@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class NearbyUserDto {
     private UUID userId;
     private double distanceMeters;
+    private String zona;
 }

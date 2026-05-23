@@ -75,13 +75,32 @@ public class ProfileServiceAdapter implements ProfileServicePort {
         }
     }
 
+    @Override
+    public boolean isGeolocationEnabled(UUID userId) {
+        try {
+            return Boolean.TRUE.equals(profileFeignClient.isGeolocationEnabled(userId));
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean isActive(UUID userId) {
+        try {
+            return Boolean.TRUE.equals(profileFeignClient.isActive(userId));
+        } catch (FeignException e) {
+            throw new ExternalServiceException("Profile service unavailable: " + e.getMessage());
+        }
+    }
+
     private MatchProfile toMatchProfile(UserMatchProfileDto dto) {
         return new MatchProfile(
                 dto.getId(),
                 dto.getCareer(),
                 dto.getSemester(),
                 dto.getTags(),
-                dto.getSchedulesAvailable()
+                dto.getSchedulesAvailable(),
+                dto.isActive()
         );
     }
 }

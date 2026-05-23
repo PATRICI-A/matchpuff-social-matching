@@ -25,4 +25,10 @@ public interface ProfileFeignClient {
 
     @GetMapping("/matching/profiles/candidates/{userId}")
     List<UserMatchProfileDto> getAllProfiles(@PathVariable UUID userId);
+
+    @GetMapping("/users/{userId}/geolocation")
+    Boolean isGeolocationEnabled(@PathVariable UUID userId);
+
+    @GetMapping("/users/{userId}/active")
+    Boolean isActive(@PathVariable UUID userId);
 }
