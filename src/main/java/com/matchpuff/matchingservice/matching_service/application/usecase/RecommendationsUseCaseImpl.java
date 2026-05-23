@@ -1,11 +1,8 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
+import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteria;
 import org.springframework.stereotype.Service;
 
 import com.matchpuff.matchingservice.matching_service.application.service.AffinityCalculator;
@@ -62,4 +59,6 @@ public class RecommendationsUseCaseImpl implements RecommendationsUseCasePort {
         MatchProfile b = profileServicePort.getProfileById(userId2);
         return affinityCalculator.calculate(a, b);
     }
+
+
 }

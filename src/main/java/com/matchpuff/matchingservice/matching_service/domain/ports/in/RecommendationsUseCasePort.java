@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.matchpuff.matchingservice.matching_service.application.dto.request.FilterCriteria;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 
@@ -13,4 +14,5 @@ public interface RecommendationsUseCasePort {
     List<MatchProfile> getRecommendedProfilesForUser(UUID userId);
     List<UUID> getRecommendedUserIdsForUser(UUID userId);
     AffinityScore calculateAffinityScore(UUID userId1, UUID userId2);
+    List<UUID> getFilteredRecommendations(UUID userId, FilterCriteria filters);
 }
