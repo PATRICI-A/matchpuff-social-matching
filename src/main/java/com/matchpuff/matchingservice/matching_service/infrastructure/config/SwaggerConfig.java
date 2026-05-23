@@ -49,7 +49,7 @@ public class SwaggerConfig {
                         public API gateway.
                         """)
                         .contact(new Contact()
-                                .name("Contact Matchpuff — Escuela Colombiana de Ingeniera Julio Garavito")
+                                .name("Matchpuff Team — Escuela Colombiana de Ingeniera Julio Garavito")
                                 .email("javier.romero-d@mail.escuelaing.edu.co")
                                 .email("andres.cardozo-m@mail.escuelaing.edu.co"))
                 )
