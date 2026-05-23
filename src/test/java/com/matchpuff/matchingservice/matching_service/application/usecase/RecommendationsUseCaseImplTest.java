@@ -1,6 +1,7 @@
 package com.matchpuff.matchingservice.matching_service.application.usecase;
 
 import com.matchpuff.matchingservice.matching_service.application.service.AffinityCalculator;
+import com.matchpuff.matchingservice.matching_service.domain.exceptions.NoRecommendationsFoundException;
 import com.matchpuff.matchingservice.matching_service.domain.model.AffinityScore;
 import com.matchpuff.matchingservice.matching_service.domain.model.MatchProfile;
 import com.matchpuff.matchingservice.matching_service.domain.model.NearbyRecommendation;
@@ -137,14 +138,14 @@ class RecommendationsUseCaseImplTest {
     }
 
     @Test
-    void getRecommendationsForUser_onlyUser_returnsEmptyMap() {
+    void getRecommendationsForUser_onlyUser_throwsNoRecommendationsFoundException() {
         when(profileServicePort.getProfileById(userId)).thenReturn(userProfile);
         // profile service excludes the requester, so returns empty list
         when(profileServicePort.getAllProfiles(userId)).thenReturn(List.of());
 
-        Map<UUID, AffinityScore> result = recommendationsUseCase.getRecommendationsForUser(userId);
-
-        assertThat(result).isEmpty();
+        assertThatThrownBy(() -> recommendationsUseCase.getRecommendationsForUser(userId))
+                .isInstanceOf(NoRecommendationsFoundException.class)
+                .hasMessageContaining("couldn't find anyone");
     }
 
     @Test
