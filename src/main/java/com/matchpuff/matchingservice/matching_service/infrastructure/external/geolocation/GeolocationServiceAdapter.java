@@ -22,7 +22,7 @@ public class GeolocationServiceAdapter implements GeolocationServicePort {
 	@Override
 	public List<NearbyUserDistance> getNearbyUsers(UUID userId) {
 		try {
-			return geolocationFeignClient.getNearbyUsers(userId).stream()
+			return geolocationFeignClient.getNearbyUsers(userId, 200.0, true).stream()
 					.map(dto -> new NearbyUserDistance(dto.getUserId(), dto.getDistanceMeters()))
 					.toList();
 		} catch (FeignException e) {

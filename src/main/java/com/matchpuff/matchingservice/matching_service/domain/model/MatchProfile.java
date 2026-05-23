@@ -16,4 +16,5 @@ public class MatchProfile {
     private Integer semester;
     private List<String> tags;
     private List<String> schedulesAvailable;
+    private boolean active;
 }

@@ -12,4 +12,5 @@ public class UserMatchProfileDto {
     private Integer semester;  // ej: 2
     private List<String> tags;  // ej : ["TAGid1", "TAGid2", "TAGid3"]
     private List<String> schedulesAvailable; // ej: ["MONDAY_8AM-10AM", "WEDNESDAY_2PM-4PM", "FRIDAY_10AM-12PM"]
+    private boolean active;
 }
