@@ -16,5 +16,5 @@ public interface RecommendationsUseCasePort {
     List<UUID> getRecommendedUserIdsForUser(UUID userId);
     List<NearbyRecommendation> getNearbyRecommendationsForUser(UUID userId);
     AffinityScore calculateAffinityScore(UUID userId1, UUID userId2);
-    List<UUID> getFilteredRecommendations(UUID userId, FilterCriteria filters);
+
 }
